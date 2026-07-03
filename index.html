@@ -2,7 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Khảo Sát Thiết Bị</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Khảo Sát TBCNTT</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -10,36 +11,59 @@
 <body class="bg-light">
 
 <div class="container py-4">
-    <div class="card p-4 shadow">
-        <h3>PHIẾU KHẢO SÁT</h3>
+    <div class="card shadow p-4">
+        <h3 class="text-center mb-4 text-primary">PHIẾU KHẢO SÁT TRANG THIẾT BỊ</h3>
         <form id="surveyForm">
             <div class="row g-3">
                 <div class="col-md-6"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
                 <div class="col-md-6"><label>Người sử dụng</label><input type="text" id="user" class="form-control" required></div>
-                <button type="submit" class="btn btn-primary">Gửi dữ liệu</button>
+                <div class="col-md-6"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
+                <div class="col-md-6"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1"></div>
+                <div class="col-12"><label>Cấu hình</label><textarea id="specs" class="form-control"></textarea></div>
+                <div class="col-md-6"><label>HĐH</label>
+                    <select id="os" class="form-select"><option>Windows 10</option><option>Windows 11</option></select>
+                </div>
+                <div class="col-md-6"><label>Bản quyền HĐH</label>
+                    <select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Thêm vào bảng</button>
             </div>
         </form>
+        <button onclick="exportToExcel()" class="btn btn-success mt-3">Xuất file Excel</button>
     </div>
 </div>
 
 <script>
-    // KHAI BÁO DUY NHẤT 1 LẦN
-    const supabase = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    // KHỞI TẠO DUY NHẤT 1 LẦN
+    const supabaseClient = supabase.createClient(
+        'https://ckoersckkzygzuifplwj.supabase.co', 
+        'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi'
+    );
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
-        const { error } = await supabase.from('survey_devices').insert([{
+        const { error } = await supabaseClient.from('survey_devices').insert([{
+            dept: document.getElementById('dept').value,
             user: document.getElementById('user').value,
-            dept: document.getElementById('dept').value
+            device: document.getElementById('device').value,
+            qty: document.getElementById('qty').value,
+            specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value,
+            os_license: document.getElementById('os_license').value
         }]);
         
-        if (error) {
-            console.error("Lỗi:", error);
-            alert("Lỗi: " + error.message);
-        } else {
-            alert("Gửi thành công!");
-        }
+        if (error) alert("Lỗi gửi dữ liệu: " + error.message);
+        else alert("Gửi thành công!");
     };
+
+    async function exportToExcel() {
+        const { data, error } = await supabaseClient.from('survey_devices').select('*');
+        if (error) return alert("Lỗi xuất file: " + error.message);
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Baocao");
+        XLSX.writeFile(wb, "PhieuKhaoSat.xlsx");
+    }
 </script>
 </body>
 </html>
