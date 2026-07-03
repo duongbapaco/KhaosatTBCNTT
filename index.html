@@ -2,12 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phiếu Khảo Sát Thiết Bị</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link rel="icon" href="data:,">
 </head>
 <body class="bg-light">
 
@@ -19,37 +17,68 @@
                 <div class="col-md-6"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
                 <div class="col-md-6"><label>Người sử dụng</label><input type="text" id="user" class="form-control" required></div>
                 <div class="col-12"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
-                <div class="col-12"><label>Cấu hình chi tiết</label><textarea id="specs" class="form-control" rows="2"></textarea></div>
                 
                 <div class="col-md-6"><label>Hệ điều hành</label>
-                    <select id="os" class="form-select"><option>Windows 10</option><option>Windows 11</option></select>
+                    <select id="os" class="form-select">
+                        <option value="Chưa có">Chưa có</option>
+                        <option value="Windows XP">Windows XP</option><option value="Windows 7">Windows 7</option>
+                        <option value="Windows 10">Windows 10</option><option value="Windows 11">Windows 11</option>
+                    </select>
                 </div>
                 <div class="col-md-6"><label>Bản quyền HĐH</label>
-                    <select id="os_license" class="form-select"><option>Có bản quyền</option><option>Chưa có bản quyền</option></select>
+                    <select id="os_license" class="form-select"><option value="Chưa có">Chưa có</option><option value="Có">Có bản quyền</option></select>
                 </div>
-                
-                <div class="col-md-6"><label>Phiên bản Office</label>
-                    <select id="office" class="form-select"><option>Office 2019</option><option>Office 365</option></select>
+
+                <div class="col-md-6"><label>Phần mềm Office</label>
+                    <select id="office" class="form-select">
+                        <option value="Chưa có">Chưa có</option>
+                        <option value="Office 2003">Office 2003</option><option value="Office 2010">Office 2010</option>
+                        <option value="Office 2016">Office 2016</option><option value="Office 2019">Office 2019</option>
+                        <option value="Office 2021">Office 2021</option><option value="Office 365">Office 365</option>
+                    </select>
                 </div>
                 <div class="col-md-6"><label>Bản quyền Office</label>
-                    <select id="office_license" class="form-select"><option>Có bản quyền</option><option>Chưa có bản quyền</option></select>
+                    <select id="office_license" class="form-select"><option value="Chưa có">Chưa có</option><option value="Có">Có bản quyền</option></select>
                 </div>
-                
-                <div class="col-12"><label>Phần mềm khác</label><input type="text" id="others" class="form-control"></div>
+
+                <div class="col-12"><label>Phần mềm khác (Tài chính, Kế toán...)</label>
+                    <input list="softwares" id="others" class="form-control" placeholder="Nhấp để chọn hoặc nhập tên...">
+                    <datalist id="softwares">
+                        <option value="MISA SME"><option value="FAST Accounting"><option value="Bravo">
+                        <option value="Adobe Photoshop"><option value="AutoCAD"><option value="Unikey">
+                        <option value="Google Chrome"><option value="Foxit Reader">
+                    </datalist>
+                </div>
+
                 <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
             </div>
             <button type="submit" class="btn btn-primary w-100 mt-4">Gửi thông tin</button>
         </form>
-        <button onclick="exportToExcel()" class="btn btn-success w-100 mt-3">Xuất báo cáo Excel theo mẫu</button>
+
+        <hr class="my-4">
+        <button onclick="exportToExcel()" class="btn btn-success w-100 mb-3">Xuất báo cáo Excel theo mẫu</button>
+        
+        <h5>Dữ liệu đã thu thập:</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead><tr><th>Người dùng</th><th>Bộ phận</th><th>Thiết bị</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // Khởi tạo Supabase với thông tin dự án của bạn
-    const supabaseClient = supabase.createClient(
-        'https://ckoersckkzygzuifplwj.supabase.co', 
-        'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi'
-    );
+    const supabaseClient = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+
+    async function loadData() {
+        const { data } = await supabaseClient.from('survey_devices').select('*');
+        if (data) {
+            document.getElementById('tableBody').innerHTML = data.map(row => 
+                `<tr><td>${row.full_name}</td><td>${row.department}</td><td>${row.device_name}</td></tr>`
+            ).join('');
+        }
+    }
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
@@ -57,16 +86,15 @@
             department: document.getElementById('dept').value,
             full_name: document.getElementById('user').value,
             device_name: document.getElementById('device').value,
-            specs: document.getElementById('specs').value,
             os: document.getElementById('os').value + " (" + document.getElementById('os_license').value + ")",
             office_version: document.getElementById('office').value + " (" + document.getElementById('office_license').value + ")",
-            other_software: document.getElementById('others').value,
+            other_software: document.getElementById('others').value || "-",
             suggestions: document.getElementById('note').value
         };
 
         const { error } = await supabaseClient.from('survey_devices').insert([data]);
         if (error) alert("Lỗi: " + error.message);
-        else { alert("Đã gửi thành công!"); document.getElementById('surveyForm').reset(); }
+        else { alert("Gửi thành công!"); document.getElementById('surveyForm').reset(); loadData(); }
     };
 
     async function exportToExcel() {
@@ -76,10 +104,9 @@
             "Người sử dụng": item.full_name,
             "Bộ phận": item.department,
             "Tên thiết bị": item.device_name,
-            "Cấu hình chi tiết": item.specs,
             "Hệ điều hành": item.os,
             "Phần mềm Office": item.office_version,
-            "Phần mềm khác": item.other_software || "-",
+            "Phần mềm khác": item.other_software,
             "SL": 1,
             "Đề xuất / Kiến nghị": item.suggestions
         }));
@@ -88,6 +115,8 @@
         XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
         XLSX.writeFile(wb, "Bang_Tong_Hop_Khao_Sat.xlsx");
     }
+
+    loadData();
 </script>
 </body>
 </html>
