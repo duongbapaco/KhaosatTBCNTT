@@ -12,8 +12,8 @@
 <body class="bg-light">
 
 <div class="container py-4">
-    <div class="card shadow p-4 mx-auto" style="max-width: 700px;">
-        <h4 class="text-center mb-4 text-primary">PHIẾU KHẢO SÁT THIẾT BỊ CÔNG NGHỆ</h4>
+    <div class="card shadow p-4 mx-auto" style="max-width: 800px;">
+        <h4 class="text-center mb-4 text-primary">PHIẾU KHẢO SÁT TRANG THIẾT BỊ</h4>
         <form id="surveyForm">
             <div class="row g-3">
                 <div class="col-md-6"><label>Bộ phận/Phòng ban</label><input type="text" id="dept" class="form-control" required></div>
@@ -37,7 +37,17 @@
             </div>
             <button type="submit" class="btn btn-primary w-100 mt-4">Gửi thông tin</button>
         </form>
-        <button onclick="exportToExcel()" class="btn btn-success w-100 mt-2">Xuất báo cáo Excel</button>
+
+        <hr class="my-4">
+        <button onclick="exportToExcel()" class="btn btn-success w-100 mb-3">Xuất báo cáo Excel</button>
+        
+        <h5>Dữ liệu đã thu thập:</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead><tr><th>Người dùng</th><th>Bộ phận</th><th>Thiết bị</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -46,6 +56,15 @@
         'https://ckoersckkzygzuifplwj.supabase.co', 
         'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi'
     );
+
+    async function loadData() {
+        const { data } = await supabaseClient.from('survey_devices').select('*');
+        if (data) {
+            document.getElementById('tableBody').innerHTML = data.map(row => 
+                `<tr><td>${row.full_name}</td><td>${row.department}</td><td>${row.device_name}</td></tr>`
+            ).join('');
+        }
+    }
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
@@ -66,6 +85,7 @@
         } else {
             alert("Đã gửi thành công!");
             document.getElementById('surveyForm').reset();
+            loadData(); // Tải lại bảng ngay sau khi thêm mới
         }
     };
 
@@ -76,6 +96,8 @@
         XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
         XLSX.writeFile(wb, "PhieuKhaoSat.xlsx");
     }
+
+    loadData(); // Tải dữ liệu ngay khi trang được mở
 </script>
 </body>
 </html>
