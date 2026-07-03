@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khảo Sát Thiết Bị Công Nghệ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Khảo Sát Thiết Bị IT</h2>
+            <form id="surveyForm">
+                <div class="mb-3">
+                    <label class="form-label">Người sử dụng</label>
+                    <input type="text" id="user" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Bộ phận</label>
+                    <input type="text" id="dept" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên thiết bị</label>
+                    <input type="text" id="device" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Cấu hình (CPU/RAM/SSD)</label>
+                    <input type="text" id="specs" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hệ điều hành</label>
+                    <input type="text" id="os" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Office</label>
+                    <input type="text" id="office" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phần mềm khác</label>
+                    <textarea id="others" class="form-control"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Đề xuất/Kiến nghị</label>
+                    <textarea id="note" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Gửi thông tin</button>
+            </form>
+            <div id="message" class="mt-3 text-center fw-bold"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cấu hình kết nối Supabase
+    const SUPABASE_URL = 'https://ckoersckkzygzuifplwj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('surveyForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.innerText = 'Đang gửi...';
+
+        const { data, error } = await supabase.from('survey_devices').insert([{
+            full_name: document.getElementById('user').value,
+            department: document.getElementById('dept').value,
+            device_name: document.getElementById('device').value,
+            specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value,
+            office_version: document.getElementById('office').value,
+            other_software: document.getElementById('others').value,
+            suggestions: document.getElementById('note').value
+        }]);
+
+        if (error) {
+            document.getElementById('message').innerHTML = '<span class="text-danger">Lỗi: ' + error.message + '</span>';
+            btn.disabled = false;
+            btn.innerText = 'Gửi lại';
+        } else {
+            document.getElementById('message').innerHTML = '<span class="text-success">Gửi thành công! Cảm ơn bạn.</span>';
+            document.getElementById('surveyForm').reset();
+            btn.disabled = false;
+            btn.innerText = 'Gửi thông tin';
+        }
+    };
+</script>
+</body>
+</html>
