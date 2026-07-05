@@ -6,10 +6,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
     <style>
         .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
         .bg-connected { background: #d4edda; color: #155724; }
         .bg-disconnected { background: #f8d7da; color: #721c24; }
+        @media print { body * { visibility: hidden; } #qrModal, #qrModal * { visibility: visible; } #qrModal { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
 </head>
 <body class="bg-light p-4">
@@ -17,7 +19,7 @@
 <div class="card shadow p-4" style="max-width: 1100px; margin: auto;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="text-primary m-0">PHIẾU KIỂM KÊ & QUẢN LÝ THIẾT BỊ CNTT</h4>
-        <div id="connStatus" class="status-pill bg-secondary text-white">Đang kết nối...</div>
+        <div id="connStatus" class="status-pill bg-secondary text-white">Đang kiểm tra kết nối...</div>
     </div>
 
     <form id="surveyForm" class="mb-5">
@@ -30,7 +32,7 @@
             </div>
             
             <div class="col-md-6"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
-            <div class="col-md-6"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control" required></div>
+            <div class="col-md-6"><label>Cấu hình chi tiết (CPU, RAM, HDD...)</label><input type="text" id="specs" class="form-control" required></div>
 
             <div class="col-md-8"><label>Hệ điều hành</label>
                 <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>macOS</option></select>
@@ -46,7 +48,9 @@
                 <select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
             </div>
 
-            <div class="col-md-8"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control"></div>
+            <div class="col-md-8"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control">
+                <datalist id="softList"><option value="ASIA Soft"><option value="Quasoft"><option value="MISA SME"><option value="AutoCAD"></datalist>
+            </div>
             <div class="col-md-4"><label>Bản quyền PM khác</label>
                 <select id="others_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
             </div>
@@ -54,28 +58,34 @@
             <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
 
             <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1">Lưu & Thêm vào bảng</button>
+                <button type="submit" class="btn btn-primary flex-grow-1">Lưu dữ liệu</button>
                 <button type="button" onclick="exportToExcel()" class="btn btn-success">Xuất báo cáo hành chính</button>
             </div>
         </div>
     </form>
 
-    <hr>
-    <h5 class="text-secondary mt-4">Danh sách thiết bị đã kiểm kê:</h5>
+    <h5 class="text-secondary">Danh sách thiết bị đã kiểm kê:</h5>
     <div class="table-responsive">
-        <table class="table table-hover table-bordered mt-3">
+        <table class="table table-bordered">
             <thead class="table-dark">
-                <tr><th>Ngày</th><th>Người dùng</th><th>Thiết bị</th><th>Cấu hình</th><th>Trạng thái</th><th>Thao tác</th></tr>
+                <tr><th>Thiết bị</th><th>Người dùng</th><th>Cấu hình</th><th>Trạng thái</th><th>Thao tác</th><th>QR</th></tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
+<div id="qrModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; padding:30px; border:2px solid #333; z-index:1000; text-align:center;">
+    <h5 id="qrTitle">TEM KIỂM KÊ</h5>
+    <div id="qr-preview" class="my-3 d-flex justify-content-center"></div>
+    <button class="btn btn-secondary" onclick="document.getElementById('qrModal').style.display='none'">Đóng</button>
+    <button class="btn btn-primary" onclick="window.print()">In Tem</button>
+</div>
+
 <script>
+    // 1. Cấu hình (Thay Anon Key của bạn vào đây)
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
-    // 1. Kiểm tra kết nối & Load dữ liệu ngay khi mở
     async function init() {
         const { error, data } = await _sb.from('survey_devices').select('*');
         const statusEl = document.getElementById('connStatus');
@@ -85,19 +95,18 @@
         if (data) {
             document.getElementById('tableBody').innerHTML = data.map(row => `
                 <tr>
-                    <td>${row.check_date}</td>
-                    <td>${row.full_name}</td>
                     <td>${row.device_name}</td>
+                    <td>${row.full_name}</td>
                     <td>${row.specs}</td>
                     <td>${row.status_device}</td>
                     <td><button class="btn btn-sm btn-danger" onclick="deleteRow(${row.id})">Xóa</button></td>
+                    <td><button class="btn btn-sm btn-info" onclick="showQR(${JSON.stringify(row).replace(/"/g, '&quot;')})">QR</button></td>
                 </tr>`).join('');
         }
     }
 
     document.getElementById('check_date').valueAsDate = new Date();
 
-    // 2. Lưu & Cập nhật bảng
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
         const data = {
@@ -116,14 +125,34 @@
             suggestions: document.getElementById('note').value
         };
         await _sb.from('survey_devices').insert([data]);
-        alert("Đã lưu!"); init(); // Gọi lại hàm init để cập nhật bảng ngay lập tức
+        alert("Lưu thành công!"); init();
     };
 
-    async function deleteRow(id) {
-        if(confirm('Xóa bản ghi này?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); }
+    function showQR(row) {
+        document.getElementById('qr-preview').innerHTML = "";
+        const content = `TB: ${row.device_name}\nNgười SD: ${row.full_name}\nCấu hình: ${row.specs}\nTT: ${row.status_device}`;
+        new QRCode(document.getElementById('qr-preview'), { text: content, width: 200, height: 200, correctLevel: 3 });
+        document.getElementById('qrTitle').innerText = "Tem: " + row.device_name;
+        document.getElementById('qrModal').style.display = 'block';
     }
 
-    async function exportToExcel() { /* Giữ nguyên hàm cũ */ }
+    async function deleteRow(id) {
+        if(confirm('Xóa bản ghi?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); }
+    }
+
+    async function exportToExcel() {
+        const { data } = await _sb.from('survey_devices').select('*');
+        const report = [
+            ["CƠ QUAN CHỦ QUẢN", "", "", "", "", "", "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"],
+            ["TÊN CƠ QUAN", "", "", "", "", "", "Độc lập - Tự do - Hạnh phúc"],
+            ["BÁO CÁO THỐNG KÊ KIỂM KÊ CNTT", "", "", "", "", "", ""],
+            ["STT", "Ngày", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "BQ HĐH", "Office", "BQ Off", "PM Khác", "BQ PM", "Trạng thái", "Kiến nghị"]
+        ];
+        data.forEach((item, i) => report.push([i+1, item.check_date, item.department, item.full_name, item.device_name, item.specs, item.os, item.os_license, item.office_version, item.office_license, item.other_software, item.others_license, item.status_device, item.suggestions]));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(report), "BaoCao");
+        XLSX.writeFile(wb, "Bao_cao_Kiem_ke_2026.xlsx");
+    }
 
     init();
 </script>
