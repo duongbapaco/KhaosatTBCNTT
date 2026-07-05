@@ -2,52 +2,46 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Khảo sát Thiết bị CNTT</title>
+    <title>Khảo sát Thiết bị CNTT & QR</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #qrModal, #qrModal * { visibility: visible; }
+            #qrModal { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
 </head>
 <body class="bg-light p-3">
 
 <div class="card shadow p-4" style="max-width: 1000px; margin: auto;">
-    <h4 class="text-center text-primary">PHIẾU KHẢO SÁT TRANG THIẾT BỊ CNTT</h4>
-    <div id="status" class="text-center small mb-3 text-secondary">Đang kết nối Supabase...</div>
+    <h4 class="text-center text-primary">PHIẾU KHẢO SÁT & KIỂM KÊ THIẾT BỊ CNTT</h4>
+    <div id="status" class="text-center small mb-3 text-secondary">Đang kết nối...</div>
     
     <form id="surveyForm">
         <div class="row g-2">
             <div class="col-md-4"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-4"><label>Người sử dụng</label><input type="text" id="user" class="form-control" required></div>
-            <div class="col-md-4"><label>Số lượng (SL)</label><input type="number" id="qty" class="form-control" value="1" required></div>
+            <div class="col-md-4"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" required></div>
             <div class="col-12"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
             <div class="col-12"><label>Cấu hình chi tiết</label><textarea id="specs" class="form-control" rows="2"></textarea></div>
-            
-            <div class="col-md-3"><label>Hệ điều hành</label>
+            <div class="col-md-3"><label>HĐH</label>
                 <select id="os" class="form-select">
                     <option>Windows XP</option><option>Windows 7</option><option>Windows 8.1</option>
                     <option>Windows 10</option><option>Windows 11</option><option>macOS</option>
                 </select>
             </div>
-            <div class="col-md-3"><label>Bản quyền HĐH</label>
-                <select id="os_license" class="form-select"><option>Chưa có bản quyền</option><option>Có bản quyền</option></select>
-            </div>
-            <div class="col-md-3"><label>Phần mềm Office</label>
+            <div class="col-md-3"><label>Bản quyền HĐH</label><select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+            <div class="col-md-3"><label>Office</label>
                 <select id="office" class="form-select">
-                    <option>Office 2003</option><option>Office 2007</option><option>Office 2010</option>
-                    <option>Office 2013</option><option>Office 2016</option><option>Office 2019</option>
-                    <option>Office 2021</option><option>Office 365</option>
+                    <option>Office 2013</option><option>Office 2016</option><option>Office 2019</option><option>Office 2021</option><option>Office 365</option>
                 </select>
             </div>
-            <div class="col-md-3"><label>Bản quyền Office</label>
-                <select id="office_license" class="form-select"><option>Chưa có bản quyền</option><option>Có bản quyền</option></select>
-            </div>
-            
-            <div class="col-12"><label>Phần mềm khác (Kế toán, Chuyên ngành...)</label>
-                <input list="softList" id="others" class="form-control" placeholder="Gõ để chọn hoặc nhập tên phần mềm...">
-                <datalist id="softList">
-                    <option value="ASIA Soft"><option value="Quasoft"><option value="MISA SME"><option value="FAST Accounting">
-                    <option value="Bravo"><option value="Adobe Photoshop"><option value="AutoCAD"><option value="Unikey">
-                </datalist>
-            </div>
+            <div class="col-md-3"><label>Bản quyền Office</label><select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+            <div class="col-12"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control"></div>
             <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
             <button type="submit" class="btn btn-primary mt-3">Lưu thông tin</button>
         </div>
@@ -58,35 +52,40 @@
     <div class="table-responsive">
         <table class="table table-bordered">
             <thead class="table-dark">
-                <tr><th>STT</th><th>Người dùng</th><th>SL</th><th>Thiết bị</th><th>HĐH</th><th>Office</th><th>Phần mềm</th><th>Thao tác</th></tr>
+                <tr><th>Người dùng</th><th>Thiết bị</th><th>Thao tác</th><th>QR</th></tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
+<div id="qrModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; padding:30px; border:2px solid #333; z-index:1000; text-align:center;">
+    <h5>TEM KIỂM KÊ</h5>
+    <div id="qr-preview" class="my-3"></div>
+    <button class="btn btn-secondary" onclick="document.getElementById('qrModal').style.display='none'">Đóng</button>
+    <button class="btn btn-primary" onclick="window.print()">In Tem</button>
+</div>
+
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
     async function loadData() {
-        const statusEl = document.getElementById('status');
-        const { data, error } = await _sb.from('survey_devices').select('*');
-        if (error) { statusEl.innerText = "● Lỗi kết nối Supabase"; statusEl.className = "text-danger small mb-3"; return; }
-        
-        statusEl.innerText = "● Đã kết nối thành công";
-        statusEl.className = "text-success small mb-3";
-
-        document.getElementById('tableBody').innerHTML = data.map((row, index) => `
+        const { data } = await _sb.from('survey_devices').select('*');
+        if (!data) return;
+        document.getElementById('tableBody').innerHTML = data.map(row => `
             <tr>
-                <td>${index + 1}</td>
-                <td>${row.full_name || ''}</td>
-                <td>${row.quantity || 1}</td>
-                <td>${row.device_name || ''}</td>
-                <td>${row.os || ''}</td>
-                <td>${row.office_version || ''}</td>
-                <td>${row.other_software || ''}</td>
+                <td>${row.full_name}</td>
+                <td>${row.device_name}</td>
                 <td><button class="btn btn-danger btn-sm" onclick="deleteRow(${row.id})">Xóa</button></td>
+                <td><button class="btn btn-info btn-sm" onclick="showQR(${JSON.stringify(row).replace(/"/g, '&quot;')})">QR</button></td>
             </tr>`).join('');
+    }
+
+    function showQR(row) {
+        document.getElementById('qr-preview').innerHTML = "";
+        const qrContent = `Thiết bị: ${row.device_name}\nBộ phận: ${row.department}\nNgười dùng: ${row.full_name}\nCấu hình: ${row.specs}\nOS: ${row.os}\nOffice: ${row.office_version}`;
+        new QRCode(document.getElementById('qr-preview'), { text: qrContent, width: 150, height: 150 });
+        document.getElementById('qrModal').style.display = 'block';
     }
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
@@ -102,38 +101,27 @@
             other_software: document.getElementById('others').value,
             suggestions: document.getElementById('note').value
         };
-        const { error } = await _sb.from('survey_devices').insert([data]);
-        if(error) alert("Lỗi: " + error.message);
-        else { alert("Đã lưu!"); loadData(); }
+        await _sb.from('survey_devices').insert([data]);
+        alert("Đã lưu!"); loadData();
     };
 
     async function deleteRow(id) {
-        if(confirm('Xác nhận xóa?')) {
-            await _sb.from('survey_devices').delete().eq('id', id);
-            loadData();
-        }
+        if(confirm('Xác nhận xóa?')) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); }
     }
 
     async function exportToExcel() {
         const { data } = await _sb.from('survey_devices').select('*');
-        if (!data || data.length === 0) return alert("Không có dữ liệu!");
-
         const report = [
-            ["BẢNG TỔNG HỢP KHẢO SÁT TRANG THIẾT BỊ CÔNG NGHỆ THÔNG TIN", "", "", "", "", "", "", "", "", ""],
-            ["Thời gian xuất báo cáo: Năm 2026", "", "", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", "", "", ""],
-            ["STT", "Người sử dụng", "Bộ phận", "Tên thiết bị", "Cấu hình chi tiết", "Hệ điều hành", "Phần mềm Office", "Phần mềm khác", "SL", "Đề xuất / Kiến nghị"]
+            ["BÁO CÁO TỔNG HỢP KIỂM KÊ THIẾT BỊ CNTT", ""],
+            ["STT", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "Office", "Phần mềm", "SL", "Kiến nghị"]
         ];
-
-        data.forEach((item, index) => {
-            report.push([index + 1, item.full_name, item.department, item.device_name, item.specs, item.os, item.office_version, item.other_software, item.quantity, item.suggestions]);
+        data.forEach((item, i) => {
+            report.push([i+1, item.department, item.full_name, item.device_name, item.specs, item.os, item.office_version, item.other_software, item.quantity, item.suggestions]);
         });
-
         const ws = XLSX.utils.aoa_to_sheet(report);
-        ws['!cols'] = [{ wch: 5 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 40 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 5 }, { wch: 30 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
-        XLSX.writeFile(wb, "Danh_sach_thong_ke_CNTT.xlsx");
+        XLSX.writeFile(wb, "Danh_sach_Kiem_ke.xlsx");
     }
 
     loadData();
