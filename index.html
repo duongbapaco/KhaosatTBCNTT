@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Khảo sát Thiết bị CNTT</title>
+    <title>Khảo sát & Kiểm kê Thiết bị CNTT</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,74 +11,119 @@
 <body class="bg-light p-3">
 
 <div class="card shadow p-4" style="max-width: 1000px; margin: auto;">
-    <h4 class="text-center text-primary">PHIẾU KHẢO SÁT & KIỂM KÊ THIẾT BỊ CNTT</h4>
-    <div id="connectionStatus" class="text-center p-2 mb-3 rounded" style="background:#eee;">Đang kiểm tra kết nối...</div>
+    <h4 class="text-center text-primary">PHIẾU KHẢO SÁT THIẾT BỊ CNTT</h4>
+    <div id="status" class="text-success text-center small mb-3">● Đã kết nối Supabase</div>
     
     <form id="surveyForm">
         <div class="row g-2">
             <div class="col-md-4"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-4"><label>Người sử dụng</label><input type="text" id="user" class="form-control" required></div>
+            <div class="col-md-4"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" required></div>
             <div class="col-12"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
+            <div class="col-12"><label>Cấu hình chi tiết</label><textarea id="specs" class="form-control" rows="2"></textarea></div>
+            <div class="col-md-3"><label>Hệ điều hành</label>
+                <select id="os" class="form-select">
+                    <option>Windows 10</option><option>Windows 11</option><option>macOS</option>
+                </select>
+            </div>
+            <div class="col-md-3"><label>Bản quyền HĐH</label>
+                <select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
+            </div>
+            <div class="col-md-3"><label>Office</label>
+                <select id="office" class="form-select">
+                    <option>Office 2019</option><option>Office 2021</option><option>Office 365</option>
+                </select>
+            </div>
+            <div class="col-md-3"><label>Bản quyền Office</label>
+                <select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
+            </div>
+            <div class="col-12"><label>Phần mềm khác (Kế toán, Chuyên ngành...)</label><input type="text" id="others" class="form-control"></div>
+            <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
             <button type="submit" class="btn btn-primary mt-3">Lưu thông tin</button>
         </div>
     </form>
 
     <hr>
-    <table class="table table-bordered mt-3">
-        <thead class="table-dark">
-            <tr><th>Người dùng</th><th>Thiết bị</th><th>QR</th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <button onclick="exportToExcel()" class="btn btn-success mb-3">Xuất báo cáo chuẩn Hành chính</button>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr><th>Người dùng</th><th>Thiết bị</th><th>Thao tác</th><th>QR</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="qrModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; padding:20px; border:2px solid #333; z-index:1000; text-align:center;">
+    <h5>TEM KIỂM KÊ</h5>
+    <div id="qr-preview" class="my-3"></div>
+    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('qrModal').style.display='none'">Đóng</button>
+    <button class="btn btn-sm btn-primary" onclick="window.print()">In Tem</button>
 </div>
 
 <script>
-    // 1. CẤU HÌNH - HÃY ĐIỀN KEY CỦA BẠN VÀO ĐÂY
+    // Điền Key của bạn vào đây
     const supabaseUrl = 'https://ckoersckkzygzuifplwj.supabase.co';
-    const supabaseKey = 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi'; 
+    const supabaseKey = 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi';
     const _sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. HÀM KẾT NỐI VÀ KIỂM TRA LỖI
-    async function init() {
-        const statusEl = document.getElementById('connectionStatus');
-        try {
-            // Kiểm tra bảng 'survey_devices'
-            const { data, error } = await _sb.from('survey_devices').select('*');
-            
-            if (error) throw error;
-
-            statusEl.innerText = "● Kết nối thành công! Đang tải dữ liệu...";
-            statusEl.style.backgroundColor = "#d4edda"; // Xanh lá
-            
-            // Render dữ liệu
-            document.getElementById('tableBody').innerHTML = data.map(row => `
-                <tr>
-                    <td>${row.full_name || ''}</td>
-                    <td>${row.device_name || ''}</td>
-                    <td><button class="btn btn-sm btn-info" onclick="alert('Mã QR cho: ${row.device_name}')">QR</button></td>
-                </tr>`).join('');
-                
-        } catch (err) {
-            statusEl.innerHTML = "<strong>LỖI KẾT NỐI:</strong> " + err.message + 
-                                 "<br><small>Kiểm tra lại Anon Key hoặc tên bảng 'survey_devices' trong Database.</small>";
-            statusEl.style.backgroundColor = "#f8d7da"; // Đỏ nhạt
-            console.error("Chi tiết lỗi:", err);
-        }
+    async function loadData() {
+        const { data } = await _sb.from('survey_devices').select('*');
+        if (!data) return;
+        document.getElementById('tableBody').innerHTML = data.map(row => `
+            <tr>
+                <td>${row.full_name}</td>
+                <td>${row.device_name}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteRow(${row.id})">Xóa</button></td>
+                <td><button class="btn btn-info btn-sm" onclick="showQR('${row.device_name} - ${row.full_name}')">QR</button></td>
+            </tr>`).join('');
     }
 
-    // 3. XỬ LÝ FORM
+    function showQR(text) {
+        document.getElementById('qr-preview').innerHTML = "";
+        new QRCode(document.getElementById('qr-preview'), { text: text, width: 150, height: 150 });
+        document.getElementById('qrModal').style.display = 'block';
+    }
+
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
-        const { error } = await _sb.from('survey_devices').insert([{
+        const data = {
             department: document.getElementById('dept').value,
             full_name: document.getElementById('user').value,
-            device_name: document.getElementById('device').value
-        }]);
-        if(error) alert("Không lưu được: " + error.message);
-        else { alert("Lưu thành công!"); init(); }
+            quantity: parseInt(document.getElementById('qty').value),
+            device_name: document.getElementById('device').value,
+            specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value + " (" + document.getElementById('os_license').value + ")",
+            office_version: document.getElementById('office').value + " (" + document.getElementById('office_license').value + ")",
+            other_software: document.getElementById('others').value,
+            suggestions: document.getElementById('note').value
+        };
+        const { error } = await _sb.from('survey_devices').insert([data]);
+        if (error) alert("Lỗi: " + error.message);
+        else { alert("Đã lưu!"); loadData(); }
     };
 
-    init();
+    async function deleteRow(id) {
+        if(confirm('Xác nhận xóa?')) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); }
+    }
+
+    async function exportToExcel() {
+        const { data } = await _sb.from('survey_devices').select('*');
+        const report = [
+            ["BÁO CÁO KIỂM KÊ THIẾT BỊ CNTT", ""],
+            ["STT", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "Office", "Phần mềm khác", "Kiến nghị"]
+        ];
+        data.forEach((item, i) => {
+            report.push([i+1, item.department, item.full_name, item.device_name, item.specs, item.os, item.office_version, item.other_software, item.suggestions]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(report);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
+        XLSX.writeFile(wb, "Danh_sach_Kiem_ke.xlsx");
+    }
+
+    loadData();
 </script>
 </body>
 </html>
