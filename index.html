@@ -67,7 +67,7 @@
 </div>
 
 <script>
-    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co','sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*');
