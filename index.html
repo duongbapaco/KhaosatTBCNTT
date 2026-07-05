@@ -16,7 +16,7 @@
 </head>
 <body class="bg-light p-4">
 
-<div class="card shadow p-4" style="max-width: 1100px; margin: auto;">
+<div class="card shadow p-4" style="max-width: 1200px; margin: auto;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="text-primary m-0">PHIẾU KIỂM KÊ & QUẢN LÝ THIẾT BỊ CNTT</h4>
         <div id="connStatus" class="status-pill bg-secondary text-white">Đang kiểm tra...</div>
@@ -27,20 +27,26 @@
             <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-3"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
             <div class="col-md-3"><label>Ngày</label><input type="date" id="check_date" class="form-control" required></div>
-            <div class="col-md-3"><label>Tình trạng</label>
-                <select id="status_device" class="form-select"><option>Tốt</option><option>Cần bảo trì</option><option>Hỏng</option></select>
-            </div>
+            <div class="col-md-3"><label>Tình trạng</label><select id="status_device" class="form-select"><option>Tốt</option><option>Cần bảo trì</option><option>Hỏng</option></select></div>
+            
             <div class="col-md-6"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
-            <div class="col-md-6"><label>Cấu hình</label><input type="text" id="specs" class="form-control" placeholder="Ví dụ: Core i5, 8GB RAM" required></div>
+            <div class="col-md-6"><label>Cấu hình</label><input type="text" id="specs" class="form-control" required></div>
+
             <div class="col-md-8"><label>Hệ điều hành</label>
-                <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option></select>
+                <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>macOS</option><option>Linux</option><option>Windows Server</option></select>
             </div>
             <div class="col-md-4"><label>Bản quyền HĐH</label><select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+
             <div class="col-md-8"><label>Bộ phần mềm Office</label>
-                <select id="office" class="form-select"><option>Office 365</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option></select>
+                <select id="office" class="form-select"><option>Office 365</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option></select>
             </div>
             <div class="col-md-4"><label>Bản quyền Office</label><select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+
+            <div class="col-md-8"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control"><datalist id="softList"><option value="ASIA Soft"><option value="Quasoft"><option value="MISA SME"><option value="FAST"><option value="AutoCAD"></datalist></div>
+            <div class="col-md-4"><label>Bản quyền PM khác</label><select id="others_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+            
             <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
+
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1">Lưu dữ liệu</button>
                 <button type="button" onclick="exportToExcel()" class="btn btn-success">Xuất báo cáo</button>
@@ -48,10 +54,10 @@
         </div>
     </form>
 
-    <h5 class="text-secondary">Danh sách thiết bị:</h5>
+    <h5 class="text-secondary">Danh sách thiết bị đã kiểm kê:</h5>
     <div class="table-responsive">
         <table class="table table-bordered">
-            <thead class="table-dark"><tr><th>Thiết bị</th><th>Người dùng</th><th>TT</th><th>Thao tác</th><th>QR</th></tr></thead>
+            <thead class="table-dark"><tr><th>Thiết bị</th><th>Người dùng</th><th>Cấu hình</th><th>TT</th><th>Thao tác</th><th>QR</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -73,39 +79,45 @@
         document.getElementById('connStatus').className = "status-pill " + (error ? "bg-disconnected" : "bg-connected");
         if (data) {
             document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-                <td>${r.device_name}</td><td>${r.full_name}</td><td>${r.status_device}</td>
+                <td>${r.device_name}</td><td>${r.full_name}</td><td>${r.specs}</td><td>${r.status_device}</td>
                 <td><button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button></td>
-                <td><button class="btn btn-sm btn-info" onclick="showQR(${JSON.stringify(r).replace(/"/g, '&quot;')})">QR</button></td>
+                <td><button class="btn btn-sm btn-info" onclick="showQR('${r.device_name}', '${r.full_name}', '${r.status_device}')">QR</button></td>
             </tr>`).join('');
         }
     }
 
     async function deleteRow(id) {
-        if(confirm('Xóa thiết bị này?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); }
+        if(confirm('Xóa bản ghi này?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); }
     }
 
-    function showQR(row) {
+    function showQR(device, user, status) {
         document.getElementById('qr-preview').innerHTML = "";
-        new QRCode(document.getElementById('qr-preview'), { text: `TB: ${row.device_name}\nSD: ${row.full_name}\nTT: ${row.status_device}`, width: 200, height: 200 });
+        new QRCode(document.getElementById('qr-preview'), { text: `TB: ${device}\nSD: ${user}\nTT: ${status}`, width: 200, height: 200 });
         document.getElementById('qrModal').style.display = 'block';
     }
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
         const data = {
-            full_name: document.getElementById('user').value,
-            status_device: document.getElementById('status_device').value,
-            device_name: document.getElementById('device').value,
-            specs: document.getElementById('specs').value,
-            os: document.getElementById('os').value,
-            os_license: document.getElementById('os_license').value,
-            office_version: document.getElementById('office').value,
-            office_license: document.getElementById('office_license').value,
-            suggestions: document.getElementById('note').value,
-            check_date: document.getElementById('check_date').value
+            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
+            check_date: document.getElementById('check_date').value, status_device: document.getElementById('status_device').value,
+            device_name: document.getElementById('device').value, specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value, os_license: document.getElementById('os_license').value,
+            office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value,
+            other_software: document.getElementById('others').value, others_license: document.getElementById('others_license').value,
+            suggestions: document.getElementById('note').value
         };
-        await _sb.from('survey_devices').insert([data]); alert("Đã lưu!"); init();
+        const { error } = await _sb.from('survey_devices').insert([data]);
+        if (error) alert("Lỗi: " + error.message); else { alert("Đã lưu!"); init(); }
     };
+
+    async function exportToExcel() {
+        const { data } = await _sb.from('survey_devices').select('*');
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Baocao");
+        XLSX.writeFile(wb, "BaoCao_KiemKe.xlsx");
+    }
 
     init();
 </script>
