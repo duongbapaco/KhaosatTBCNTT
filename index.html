@@ -19,37 +19,41 @@
 <div class="card shadow p-4" style="max-width: 1100px; margin: auto;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="text-primary m-0">PHIẾU KIỂM KÊ & QUẢN LÝ THIẾT BỊ CNTT</h4>
-        <div id="connStatus" class="status-pill bg-secondary text-white">Đang kiểm tra kết nối...</div>
+        <div id="connStatus" class="status-pill bg-secondary text-white">Đang kiểm tra...</div>
     </div>
 
     <form id="surveyForm" class="mb-5">
         <div class="row g-3">
             <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-3"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
-            <div class="col-md-3"><label>Ngày kiểm kê</label><input type="date" id="check_date" class="form-control" required></div>
+            <div class="col-md-3"><label>Ngày</label><input type="date" id="check_date" class="form-control" required></div>
             <div class="col-md-3"><label>Tình trạng</label>
                 <select id="status_device" class="form-select"><option>Tốt</option><option>Cần bảo trì</option><option>Hỏng</option></select>
             </div>
             
             <div class="col-md-6"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
-            <div class="col-md-6"><label>Cấu hình chi tiết (CPU, RAM, HDD...)</label><input type="text" id="specs" class="form-control" required></div>
+            <div class="col-md-6"><label>Cấu hình (CPU, RAM, HDD)</label><input type="text" id="specs" class="form-control" placeholder="Ví dụ: Core i5, 8GB RAM" required></div>
 
             <div class="col-md-8"><label>Hệ điều hành</label>
-                <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>macOS</option></select>
+                <select id="os" class="form-select">
+                    <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>macOS</option><option>Linux</option><option>Windows Server</option>
+                </select>
             </div>
             <div class="col-md-4"><label>Bản quyền HĐH</label>
                 <select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
             </div>
 
-            <div class="col-md-8"><label>Phần mềm Office</label>
-                <select id="office" class="form-select"><option>Office 365</option><option>Office 2021</option></select>
+            <div class="col-md-8"><label>Bộ phần mềm Office</label>
+                <select id="office" class="form-select">
+                    <option>Office 365</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option>
+                </select>
             </div>
             <div class="col-md-4"><label>Bản quyền Office</label>
                 <select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
             </div>
 
-            <div class="col-md-8"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control">
-                <datalist id="softList"><option value="ASIA Soft"><option value="Quasoft"><option value="MISA SME"><option value="AutoCAD"></datalist>
+            <div class="col-md-8"><label>Phần mềm khác</label><input list="softList" id="others" class="form-control" placeholder="Nhập tên phần mềm...">
+                <datalist id="softList"><option value="ASIA Soft"><option value="Quasoft"><option value="MISA SME"><option value="FAST Accounting"><option value="Bravo"><option value="AutoCAD"><option value="Adobe Photoshop"><option value="Unikey"></datalist>
             </div>
             <div class="col-md-4"><label>Bản quyền PM khác</label>
                 <select id="others_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select>
@@ -59,101 +63,58 @@
 
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1">Lưu dữ liệu</button>
-                <button type="button" onclick="exportToExcel()" class="btn btn-success">Xuất báo cáo hành chính</button>
+                <button type="button" onclick="exportToExcel()" class="btn btn-success">Xuất báo cáo</button>
             </div>
         </div>
     </form>
 
-    <h5 class="text-secondary">Danh sách thiết bị đã kiểm kê:</h5>
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead class="table-dark">
-                <tr><th>Thiết bị</th><th>Người dùng</th><th>Cấu hình</th><th>Trạng thái</th><th>Thao tác</th><th>QR</th></tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <h5 class="text-secondary">Danh sách thiết bị:</h5>
+    <div class="table-responsive"><table class="table table-bordered"><thead class="table-dark"><tr><th>Thiết bị</th><th>Người dùng</th><th>Cấu hình</th><th>TT</th><th>QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
 </div>
 
-<div id="qrModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; padding:30px; border:2px solid #333; z-index:1000; text-align:center;">
-    <h5 id="qrTitle">TEM KIỂM KÊ</h5>
-    <div id="qr-preview" class="my-3 d-flex justify-content-center"></div>
+<div id="qrModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; padding:30px; border:2px solid #333; z-index:9999; text-align:center;">
+    <h5 id="qrTitle">TEM QR</h5><div id="qr-preview" class="my-3 d-flex justify-content-center"></div>
     <button class="btn btn-secondary" onclick="document.getElementById('qrModal').style.display='none'">Đóng</button>
     <button class="btn btn-primary" onclick="window.print()">In Tem</button>
 </div>
 
 <script>
-    // 1. Cấu hình (Thay Anon Key của bạn vào đây)
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
     async function init() {
         const { error, data } = await _sb.from('survey_devices').select('*');
-        const statusEl = document.getElementById('connStatus');
-        statusEl.innerText = error ? "Chưa kết nối" : "Đã kết nối";
-        statusEl.className = "status-pill " + (error ? "bg-disconnected" : "bg-connected");
-        
-        if (data) {
-            document.getElementById('tableBody').innerHTML = data.map(row => `
-                <tr>
-                    <td>${row.device_name}</td>
-                    <td>${row.full_name}</td>
-                    <td>${row.specs}</td>
-                    <td>${row.status_device}</td>
-                    <td><button class="btn btn-sm btn-danger" onclick="deleteRow(${row.id})">Xóa</button></td>
-                    <td><button class="btn btn-sm btn-info" onclick="showQR(${JSON.stringify(row).replace(/"/g, '&quot;')})">QR</button></td>
-                </tr>`).join('');
-        }
+        document.getElementById('connStatus').innerText = error ? "Chưa kết nối" : "Đã kết nối";
+        document.getElementById('connStatus').className = "status-pill " + (error ? "bg-disconnected" : "bg-connected");
+        if (data) document.getElementById('tableBody').innerHTML = data.map(r => `<tr><td>${r.device_name}</td><td>${r.full_name}</td><td>${r.specs}</td><td>${r.status_device}</td><td><button class="btn btn-sm btn-info" onclick="showQR(${JSON.stringify(r).replace(/"/g, '&quot;')})">QR</button></td></tr>`).join('');
     }
-
-    document.getElementById('check_date').valueAsDate = new Date();
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
         const data = {
-            department: document.getElementById('dept').value,
-            full_name: document.getElementById('user').value,
-            check_date: document.getElementById('check_date').value,
-            status_device: document.getElementById('status_device').value,
-            device_name: document.getElementById('device').value,
-            specs: document.getElementById('specs').value,
-            os: document.getElementById('os').value,
-            os_license: document.getElementById('os_license').value,
-            office_version: document.getElementById('office').value,
-            office_license: document.getElementById('office_license').value,
-            other_software: document.getElementById('others').value,
-            others_license: document.getElementById('others_license').value,
+            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
+            check_date: document.getElementById('check_date').value, status_device: document.getElementById('status_device').value,
+            device_name: document.getElementById('device').value, specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value, os_license: document.getElementById('os_license').value,
+            office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value,
+            other_software: document.getElementById('others').value, others_license: document.getElementById('others_license').value,
             suggestions: document.getElementById('note').value
         };
-        await _sb.from('survey_devices').insert([data]);
-        alert("Lưu thành công!"); init();
+        await _sb.from('survey_devices').insert([data]); alert("Lưu thành công!"); init();
     };
 
     function showQR(row) {
         document.getElementById('qr-preview').innerHTML = "";
-        const content = `TB: ${row.device_name}\nNgười SD: ${row.full_name}\nCấu hình: ${row.specs}\nTT: ${row.status_device}`;
-        new QRCode(document.getElementById('qr-preview'), { text: content, width: 200, height: 200, correctLevel: 3 });
-        document.getElementById('qrTitle').innerText = "Tem: " + row.device_name;
+        new QRCode(document.getElementById('qr-preview'), { text: `TB: ${row.device_name}\nSD: ${row.full_name}\nTT: ${row.status_device}`, width: 200, height: 200, correctLevel: 3 });
         document.getElementById('qrModal').style.display = 'block';
-    }
-
-    async function deleteRow(id) {
-        if(confirm('Xóa bản ghi?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); }
     }
 
     async function exportToExcel() {
         const { data } = await _sb.from('survey_devices').select('*');
-        const report = [
-            ["CƠ QUAN CHỦ QUẢN", "", "", "", "", "", "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"],
-            ["TÊN CƠ QUAN", "", "", "", "", "", "Độc lập - Tự do - Hạnh phúc"],
-            ["BÁO CÁO THỐNG KÊ KIỂM KÊ CNTT", "", "", "", "", "", ""],
-            ["STT", "Ngày", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "BQ HĐH", "Office", "BQ Off", "PM Khác", "BQ PM", "Trạng thái", "Kiến nghị"]
-        ];
-        data.forEach((item, i) => report.push([i+1, item.check_date, item.department, item.full_name, item.device_name, item.specs, item.os, item.os_license, item.office_version, item.office_license, item.other_software, item.others_license, item.status_device, item.suggestions]));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(report), "BaoCao");
-        XLSX.writeFile(wb, "Bao_cao_Kiem_ke_2026.xlsx");
+        const report = [["STT", "Ngày", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "BQ HĐH", "Office", "BQ Office", "PM Khác", "BQ PM", "Trạng thái", "Kiến nghị"]];
+        data.forEach((i, idx) => report.push([idx+1, i.check_date, i.department, i.full_name, i.device_name, i.specs, i.os, i.os_license, i.office_version, i.office_license, i.other_software, i.others_license, i.status_device, i.suggestions]));
+        XLSX.writeFile(XLSX.utils.book_new(), "BaoCao_KiemKe.xlsx", { bookType: "xlsx" }); // Lưu ý: Cần thêm xử lý file workbook chi tiết hơn nếu muốn định dạng đẹp
     }
-
+    
     init();
 </script>
 </body>
