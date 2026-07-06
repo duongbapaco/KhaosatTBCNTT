@@ -8,6 +8,7 @@
     <style>
         .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
         .bg-connected { background: #d4edda; color: #155724; }
+        .bg-disconnected { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body class="bg-light p-4">
@@ -24,18 +25,28 @@
             <div class="col-md-3"><label>Thiết bị</label><input type="text" id="device" class="form-control" required></div>
             <div class="col-md-3"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" required></div>
             
-            <div class="col-md-4"><label>OS</label>
-                <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option></select>
+            <div class="col-md-4"><label>Hệ điều hành</label>
+                <select id="os" class="form-select">
+                    <option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option>
+                </select>
             </div>
-            <div class="col-md-4"><label>Office</label>
-                <select id="office" class="form-select"><option>Office 365</option><option>Office 2021</option><option>WPS Office</option></select>
+            <div class="col-md-4"><label>Bộ Office</label>
+                <select id="office" class="form-select">
+                    <option>Office 365</option><option>Office 2021</option><option>WPS Office</option>
+                </select>
             </div>
             <div class="col-md-4"><label>PM Chuyên ngành</label>
-                <select id="others" class="form-select"><option>Không</option><option>ASIA Soft</option><option>Quasoft</option><option>MISA SME</option></select>
+                <select id="others" class="form-select">
+                    <option value="Không">Không</option>
+                    <option value="ASIA Soft">ASIA Soft</option>
+                    <option value="Quasoft">Quasoft</option>
+                    <option value="MISA SME">MISA SME</option>
+                </select>
             </div>
             <div class="col-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-12 text-end">
                 <button type="submit" id="submitBtn" class="btn btn-primary">Lưu dữ liệu</button>
+                <button type="button" onclick="resetForm()" class="btn btn-secondary">Hủy</button>
             </div>
         </div>
     </form>
@@ -51,12 +62,17 @@
         </div>
     </div>
 
-    <table class="table table-bordered bg-white">
-        <thead class="table-dark">
-            <tr><th><input type="checkbox" id="selectAll"></th><th>Thiết bị</th><th>SL</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-bordered bg-white">
+            <thead class="table-dark">
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>Thiết bị</th><th>SL</th><th>Người dùng</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -64,12 +80,16 @@
     let allData = [];
 
     async function init() {
-        const { data } = await _sb.from('survey_devices').select('*');
+        const { data, error } = await _sb.from('survey_devices').select('*');
+        if (error) {
+            document.getElementById('connStatus').innerText = "Lỗi kết nối";
+            document.getElementById('connStatus').className = "status-pill bg-disconnected text-white";
+            return;
+        }
         allData = data || [];
         document.getElementById('connStatus').innerText = "Đã kết nối";
         document.getElementById('connStatus').className = "status-pill bg-connected text-white";
         
-        // Cập nhật bộ lọc
         const depts = [...new Set(allData.map(r => r.department))];
         const filter = document.getElementById('deptFilter');
         filter.innerHTML = '<option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
@@ -80,11 +100,10 @@
     function renderTable(data) {
         document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
             <td><input type="checkbox" class="row-check" value="${r.id}"></td>
-            <td>${r.device_name || ''}</td><td>${r.qty || 1}</td><td>${r.department || ''}</td>
+            <td>${r.device_name || ''}</td><td>${r.qty || 1}</td>
+            <td>${r.full_name || ''}</td><td>${r.department || ''}</td>
             <td>${r.os || ''}</td><td>${r.office_version || ''}</td><td>${r.other_software || 'Không'}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button>
-            </td>
+            <td><button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button></td>
         </tr>`).join('');
     }
 
@@ -95,7 +114,7 @@
 
     async function bulkUpdate() {
         const checked = document.querySelectorAll('.row-check:checked');
-        if(checked.length === 0) return alert("Vui lòng chọn ít nhất 1 thiết bị!");
+        if(checked.length === 0) return alert("Vui lòng chọn ít nhất 1 dòng!");
         const newSpec = prompt("Nhập cấu hình mới cho các mục đã chọn:");
         if(!newSpec) return;
         for(let item of checked) await _sb.from('survey_devices').update({ specs: newSpec }).eq('id', item.value);
@@ -114,6 +133,7 @@
             document.getElementById('others').value = data.other_software || "Không";
             document.getElementById('specs').value = data.specs || "";
             document.getElementById('submitBtn').innerText = "Cập nhật dữ liệu";
+            window.scrollTo(0, 0);
         });
     }
 
@@ -128,10 +148,10 @@
         };
         if (id) await _sb.from('survey_devices').update(data).eq('id', id);
         else await _sb.from('survey_devices').insert([data]);
-        document.getElementById('surveyForm').reset(); document.getElementById('editId').value = "";
-        init();
+        resetForm(); init();
     };
 
+    function resetForm() { document.getElementById('surveyForm').reset(); document.getElementById('editId').value = ""; document.getElementById('submitBtn').innerText = "Lưu dữ liệu"; }
     document.getElementById('selectAll').onclick = (e) => document.querySelectorAll('.row-check').forEach(c => c.checked = e.target.checked);
     init();
 </script>
