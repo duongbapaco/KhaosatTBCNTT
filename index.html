@@ -8,7 +8,6 @@
     <style>
         .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
         .bg-connected { background: #d4edda; color: #155724; }
-        .bg-disconnected { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body class="bg-light p-4">
@@ -27,20 +26,19 @@
             
             <div class="col-md-4"><label>Hệ điều hành</label>
                 <select id="os" class="form-select">
-                    <option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option>
+                    <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option>
+                    <option>Windows XP</option><option>Windows Server 2025</option><option>macOS</option><option>Linux</option>
                 </select>
             </div>
             <div class="col-md-4"><label>Bộ Office</label>
                 <select id="office" class="form-select">
-                    <option>Office 365</option><option>Office 2021</option><option>WPS Office</option>
+                    <option>Office 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
+                    <option>Office 2016</option><option>WPS Office</option><option>LibreOffice</option>
                 </select>
             </div>
             <div class="col-md-4"><label>PM Chuyên ngành</label>
                 <select id="others" class="form-select">
-                    <option value="Không">Không</option>
-                    <option value="ASIA Soft">ASIA Soft</option>
-                    <option value="Quasoft">Quasoft</option>
-                    <option value="MISA SME">MISA SME</option>
+                    <option value="Không">Không</option><option>ASIA Soft</option><option>Quasoft</option><option>MISA SME</option><option>FAST</option>
                 </select>
             </div>
             <div class="col-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
@@ -51,28 +49,18 @@
         </div>
     </form>
 
-    <div class="row mb-3 align-items-center">
-        <div class="col-md-4">
-            <select id="deptFilter" class="form-select" onchange="filterData()">
-                <option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>
-            </select>
-        </div>
-        <div class="col-md-8 text-end">
-            <button class="btn btn-danger btn-sm" onclick="bulkUpdate()">Sửa cấu hình hàng loạt (dòng đã chọn)</button>
-        </div>
+    <div class="mb-3">
+        <select id="deptFilter" class="form-select w-25" onchange="filterData()">
+            <option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>
+        </select>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-bordered bg-white">
-            <thead class="table-dark">
-                <tr>
-                    <th><input type="checkbox" id="selectAll"></th>
-                    <th>Thiết bị</th><th>SL</th><th>Người dùng</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <table class="table table-bordered bg-white">
+        <thead class="table-dark">
+            <tr><th>Thiết bị</th><th>SL</th><th>Người dùng</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 </div>
 
 <script>
@@ -80,12 +68,7 @@
     let allData = [];
 
     async function init() {
-        const { data, error } = await _sb.from('survey_devices').select('*');
-        if (error) {
-            document.getElementById('connStatus').innerText = "Lỗi kết nối";
-            document.getElementById('connStatus').className = "status-pill bg-disconnected text-white";
-            return;
-        }
+        const { data } = await _sb.from('survey_devices').select('*');
         allData = data || [];
         document.getElementById('connStatus').innerText = "Đã kết nối";
         document.getElementById('connStatus').className = "status-pill bg-connected text-white";
@@ -99,26 +82,19 @@
 
     function renderTable(data) {
         document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-            <td><input type="checkbox" class="row-check" value="${r.id}"></td>
             <td>${r.device_name || ''}</td><td>${r.qty || 1}</td>
             <td>${r.full_name || ''}</td><td>${r.department || ''}</td>
             <td>${r.os || ''}</td><td>${r.office_version || ''}</td><td>${r.other_software || 'Không'}</td>
-            <td><button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button></td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa/Cập nhật</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button>
+            </td>
         </tr>`).join('');
     }
 
     function filterData() {
         const val = document.getElementById('deptFilter').value;
         renderTable(val === "Tất cả" ? allData : allData.filter(r => r.department === val));
-    }
-
-    async function bulkUpdate() {
-        const checked = document.querySelectorAll('.row-check:checked');
-        if(checked.length === 0) return alert("Vui lòng chọn ít nhất 1 dòng!");
-        const newSpec = prompt("Nhập cấu hình mới cho các mục đã chọn:");
-        if(!newSpec) return;
-        for(let item of checked) await _sb.from('survey_devices').update({ specs: newSpec }).eq('id', item.value);
-        alert("Đã cập nhật!"); init();
     }
 
     function editRow(id) {
@@ -140,19 +116,14 @@
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('editId').value;
-        const data = {
-            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
-            device_name: document.getElementById('device').value, qty: parseInt(document.getElementById('qty').value),
-            os: document.getElementById('os').value, office_version: document.getElementById('office').value,
-            other_software: document.getElementById('others').value, specs: document.getElementById('specs').value
-        };
+        const data = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, qty: parseInt(document.getElementById('qty').value), os: document.getElementById('os').value, office_version: document.getElementById('office').value, other_software: document.getElementById('others').value, specs: document.getElementById('specs').value };
         if (id) await _sb.from('survey_devices').update(data).eq('id', id);
         else await _sb.from('survey_devices').insert([data]);
         resetForm(); init();
     };
 
     function resetForm() { document.getElementById('surveyForm').reset(); document.getElementById('editId').value = ""; document.getElementById('submitBtn').innerText = "Lưu dữ liệu"; }
-    document.getElementById('selectAll').onclick = (e) => document.querySelectorAll('.row-check').forEach(c => c.checked = e.target.checked);
+    async function deleteRow(id) { if(confirm('Xóa?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); } }
     init();
 </script>
 </body>
