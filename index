@@ -1,0 +1,34 @@
+<div class="col-md-4">
+    <label>Hệ điều hành</label>
+    <select id="os" class="form-select">
+        <optgroup label="Windows">
+            <option>Windows 11</option>
+            <option>Windows 10</option>
+            <option>Windows 8.1</option>
+            <option>Windows 7</option>
+            <option>Windows XP</option>
+            <option>Windows Server</option>
+        </optgroup>
+        <optgroup label="Khác">
+            <option>macOS</option>
+            <option>Linux (Ubuntu/CentOS)</option>
+            <option>ChromeOS</option>
+        </optgroup>
+    </select>
+</div>
+
+<div class="col-md-4">
+    <label>Bộ phần mềm Office</label>
+    <select id="office" class="form-select">
+        <option>Office 365</option>
+        <option>Office 2021</option>
+        <option>Office 2019</option>
+        <option>Office 2016</option>
+        <option>Office 2013</option>
+        <option>Office 2010</option>
+        <option>Office 2007</option>
+        <option>Office 2003</option>
+        <option>WPS Office</option>
+        <option>LibreOffice</option>
+    </select>
+</div>
