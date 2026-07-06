@@ -2,91 +2,61 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống Kiểm kê CNTT 2026</title>
+    <title>Hệ thống Quản lý Tài sản CNTT Toàn diện</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        .table-warning { background-color: #fff3cd !important; }
-        body { font-family: 'Times New Roman', serif; }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-light p-4">
 <div class="card p-4 shadow" style="max-width: 1400px; margin: auto;">
-    <h3 class="text-center text-uppercase fw-bold text-primary">HỆ THỐNG KIỂM KÊ TÀI SẢN CNTT 2026</h3>
-    <hr>
-    <form id="surveyForm" class="mb-4 border p-3 rounded bg-white">
-        <input type="hidden" id="editId">
-        <div class="row g-3">
-            <div class="col-md-2"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
-            <div class="col-md-2"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
-            <div class="col-md-2"><label>Thiết bị</label><input type="text" id="device" class="form-control" required></div>
-            
-            <div class="col-md-2"><label>Hệ điều hành</label>
-                <select id="os" class="form-select">
-                    <option value="Windows 11">Windows 11</option>
-                    <option value="Windows 10">Windows 10</option>
-                    <option value="Windows 8.1">Windows 8.1</option>
-                    <option value="Windows 8">Windows 8</option>
-                    <option value="Windows 7">Windows 7</option>
-                    <option value="Windows XP">Windows XP</option>
-                    <option value="Windows Server 2025">Windows Server 2025</option>
-                    <option value="Windows Server 2022">Windows Server 2022</option>
-                    <option value="Windows Server 2019">Windows Server 2019</option>
-                    <option value="Windows Server 2016">Windows Server 2016</option>
-                    <option value="Windows Server 2012">Windows Server 2012</option>
-                    <option value="macOS">macOS</option>
-                    <option value="Ubuntu">Ubuntu</option>
-                </select>
-            </div>
-            <div class="col-md-2"><label>BQ HĐH</label><select id="os_license" class="form-select text-danger"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
-            
-            <div class="col-md-2"><label>Bộ Office</label>
-                <select id="office" class="form-select">
-                    <option value="Office 365">Office 365</option>
-                    <option value="Office 2024">Office 2024</option>
-                    <option value="Office 2021">Office 2021</option>
-                    <option value="Office 2019">Office 2019</option>
-                    <option value="Office 2016">Office 2016</option>
-                    <option value="Office 2013">Office 2013</option>
-                    <option value="Office 2010">Office 2010</option>
-                    <option value="Office 2007">Office 2007</option>
-                    <option value="WPS Office">WPS Office</option>
-                    <option value="LibreOffice">LibreOffice</option>
-                </select>
-            </div>
-            <div class="col-md-2"><label>BQ Office</label><select id="office_license" class="form-select text-danger"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
+    <h3 class="text-center text-uppercase fw-bold text-primary mb-4">HỆ THỐNG KIỂM KÊ TÀI SẢN CNTT 2026</h3>
+    
+    <form id="dataForm" class="row g-3 bg-white p-3 border rounded mb-4">
+        <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
+        <div class="col-md-3"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
+        <div class="col-md-3"><label>Thiết bị</label><input type="text" id="device" class="form-control"></div>
+        
+        <div class="col-md-2"><label>Hệ điều hành</label>
+            <select id="os" class="form-select">
+                <optgroup label="Windows hiện đại"><option>Windows 11</option><option>Windows 10</option></optgroup>
+                <optgroup label="Windows cũ"><option>Windows 8.1</option><option>Windows 8</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option></optgroup>
+                <optgroup label="Windows Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012 R2</option><option>Server 2008</option></optgroup>
+            </select>
+        </div>
+        <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Có</option><option>Không</option></select></div>
+        
+        <div class="col-md-2"><label>Bộ Office</label>
+            <select id="office" class="form-select">
+                <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
+                <option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option>
+            </select>
+        </div>
+        <div class="col-md-1"><label>BQ Office</label><select id="office_license" class="form-select"><option>Có</option><option>Không</option></select></div>
 
-            <div class="col-md-2"><label>PM Chuyên ngành</label>
-                <select id="special_pm" class="form-select">
-                    <option value="Không">Không</option>
-                    <option value="ASIA Soft">ASIA Soft</option>
-                    <option value="Quasoft">Quasoft</option>
-                    <option value="MISA SME">MISA SME</option>
-                    <option value="FAST">FAST</option>
-                    <option value="iOffice">iOffice</option>
-                </select>
-            </div>
-            <div class="col-md-2"><label>BQ PM</label><select id="pm_license" class="form-select text-danger"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
-            <div class="col-md-2"><label>Trạng thái cài</label><select id="pm_status" class="form-select"><option value="Đã cài">Đã cài</option><option value="Chưa cài">Chưa cài</option><option value="Cần cập nhật">Cần cập nhật</option></select></div>
-            
-            <div class="col-md-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
-            <div class="col-12 text-end mt-3">
-                <button type="submit" id="submitBtn" class="btn btn-primary px-4">Lưu dữ liệu</button>
-                <button type="button" onclick="resetForm()" class="btn btn-secondary px-4">Hủy bỏ</button>
-            </div>
+        <div class="col-md-2"><label>PM Chuyên ngành</label>
+            <select id="special_pm" class="form-select">
+                <option>Không</option><option>ASIA Enterprise</option><option>ASIA Accounting</option>
+                <option>Quasoft Q-Office</option><option>Quasoft Q-Human</option><option>MISA SME</option><option>FAST Accounting</option>
+            </select>
+        </div>
+        <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Có</option><option>Không</option></select></div>
+
+        <div class="col-md-6"><label>Cấu hình máy (CPU, RAM, Ổ cứng)</label><input type="text" id="specs" class="form-control"></div>
+        <div class="col-md-6"><label>Đề xuất / Kiến nghị</label><input type="text" id="proposal" class="form-control"></div>
+        
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary px-4">Lưu dữ liệu & Tạo QR</button>
+            <button type="button" class="btn btn-success" onclick="exportExcel()">Xuất báo cáo Excel</button>
         </div>
     </form>
 
-    <div class="d-flex justify-content-between mb-3">
-        <select id="deptFilter" class="form-select w-25" onchange="filterData()"><option value="Tất cả">Tất cả phòng ban</option></select>
-        <button class="btn btn-success" onclick="exportExcel()">Xuất báo cáo Excel</button>
-    </div>
+    <div id="qrcode" class="text-center mb-3"></div>
 
     <div class="table-responsive">
-        <table class="table table-bordered table-hover" id="dataTable">
+        <table class="table table-bordered table-sm table-hover" id="reportTable">
             <thead class="table-dark">
-                <tr><th>Bộ phận</th><th>Người dùng</th><th>Thiết bị</th><th>OS/Off</th><th>Bản quyền (OS/Off/PM)</th><th>PM Chuyên ngành</th><th>Cấu hình</th><th>Thao tác</th></tr>
+                <tr><th>Người dùng</th><th>Thiết bị</th><th>OS(BQ)</th><th>Office(BQ)</th><th>PM(BQ)</th><th>Cấu hình</th><th>Đề xuất</th><th>Xóa</th></tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
@@ -95,81 +65,48 @@
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
-    let allData = [];
+    const qrcode = new QRCode("qrcode", { width: 100, height: 100 });
 
-    async function init() {
-        const { data } = await _sb.from('survey_devices').select('*');
-        allData = (data || []).sort((a, b) => (a.os_license === 'Chưa có' ? -1 : 1));
-        const depts = [...new Set(allData.map(r => r.department))];
-        document.getElementById('deptFilter').innerHTML = '<option value="Tất cả">Tất cả phòng ban</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
-        renderTable(allData);
-    }
-
-    function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.map(r => `
-            <tr class="${(r.os_license === 'Chưa có' || r.office_license === 'Chưa có' || r.pm_license === 'Chưa có') ? 'table-warning' : ''}">
-                <td>${r.department || ''}</td><td>${r.full_name || ''}</td><td>${r.device_name || ''}</td>
-                <td>${r.os || ''}<br>${r.office_version || ''}</td>
-                <td>HĐH: ${r.os_license || ''}<br>Off: ${r.office_license || ''}<br>PM: ${r.pm_license || ''}</td>
-                <td>${r.special_pm || ''}<br><small>(${r.pm_status || ''})</small></td>
-                <td>${r.specs || ''}</td>
-                <td><button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button></td>
+    async function loadData() {
+        const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
+        document.getElementById('tableBody').innerHTML = (data || []).map(r => `
+            <tr>
+                <td>${r.full_name||''}</td><td>${r.device_name||''}</td>
+                <td>${r.os||''} (${r.os_license||''})</td>
+                <td>${r.office_version||''} (${r.office_license||''})</td>
+                <td>${r.special_pm||''} (${r.pm_license||''})</td>
+                <td>${r.specs||''}</td><td>${r.proposal||''}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteRow('${r.id}')">Xóa</button></td>
             </tr>`).join('');
     }
 
-    function filterData() {
-        const val = document.getElementById('deptFilter').value;
-        renderTable(val === "Tất cả" ? allData : allData.filter(r => r.department === val));
-    }
-
-    function editRow(id) {
-        const r = allData.find(x => x.id === id);
-        document.getElementById('editId').value = r.id;
-        document.getElementById('dept').value = r.department || "";
-        document.getElementById('user').value = r.full_name || "";
-        document.getElementById('device').value = r.device_name || "";
-        document.getElementById('os').value = r.os || "Windows 11";
-        document.getElementById('os_license').value = r.os_license || "Chưa có";
-        document.getElementById('office').value = r.office_version || "Office 365";
-        document.getElementById('office_license').value = r.office_license || "Chưa có";
-        document.getElementById('special_pm').value = r.special_pm || "Không";
-        document.getElementById('pm_license').value = r.pm_license || "Chưa có";
-        document.getElementById('pm_status').value = r.pm_status || "Đã cài";
-        document.getElementById('specs').value = r.specs || "";
-        window.scrollTo(0,0);
-    }
-
-    document.getElementById('surveyForm').onsubmit = async (e) => {
+    document.getElementById('dataForm').onsubmit = async (e) => {
         e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const payload = {
-            department: document.getElementById('dept').value,
-            full_name: document.getElementById('user').value,
-            device_name: document.getElementById('device').value,
-            os: document.getElementById('os').value,
+        const payload = { 
+            full_name: document.getElementById('user').value, 
+            device_name: document.getElementById('device').value, 
+            os: document.getElementById('os').value, 
             os_license: document.getElementById('os_license').value,
-            office_version: document.getElementById('office').value,
-            office_license: document.getElementById('office_license').value,
-            special_pm: document.getElementById('special_pm').value,
-            pm_license: document.getElementById('pm_license').value,
-            pm_status: document.getElementById('pm_status').value,
-            specs: document.getElementById('specs').value
+            office_version: document.getElementById('office').value, 
+            office_license: document.getElementById('office_license').value, 
+            special_pm: document.getElementById('special_pm').value, 
+            pm_license: document.getElementById('pm_license').value, 
+            specs: document.getElementById('specs').value,
+            proposal: document.getElementById('proposal').value 
         };
-        if(id) await _sb.from('survey_devices').update(payload).eq('id', id);
-        else await _sb.from('survey_devices').insert([payload]);
-        resetForm(); init();
+        const { error } = await _sb.from('survey_devices').insert([payload]);
+        if(!error) {
+            qrcode.makeCode(JSON.stringify(payload));
+            loadData(); document.getElementById('dataForm').reset();
+        } else { alert("Lỗi: " + error.message); }
     };
 
-    function resetForm() { document.getElementById('surveyForm').reset(); document.getElementById('editId').value = ""; }
-
-    function exportExcel() {
-        const ws = XLSX.utils.aoa_to_sheet([["BÁO CÁO TÀI SẢN CNTT 2026"],["Bộ phận","Người dùng","Thiết bị","HĐH","BQ HĐH","Office","BQ Office","PM Chuyên ngành","BQ PM","Tình trạng cài","Cấu hình"], ...allData.map(r => [r.department, r.full_name, r.device_name, r.os, r.os_license, r.office_version, r.office_license, r.special_pm, r.pm_license, r.pm_status, r.specs])]);
-        ws['!cols'] = [{wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:10}, {wch:15}, {wch:10}, {wch:15}, {wch:10}, {wch:15}, {wch:30}];
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
-        XLSX.writeFile(wb, "Bao_cao_Tai_san_2026.xlsx");
+    async function deleteRow(id) {
+        await _sb.from('survey_devices').delete().eq('id', id);
+        loadData();
     }
-
-    init();
+    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "Bao_Cao_Tai_San.xlsx"); }
+    loadData();
 </script>
 </body>
 </html>
