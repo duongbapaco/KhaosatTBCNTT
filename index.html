@@ -1,34 +1,141 @@
-<div class="col-md-4">
-    <label>Hệ điều hành</label>
-    <select id="os" class="form-select">
-        <optgroup label="Windows">
-            <option>Windows 11</option>
-            <option>Windows 10</option>
-            <option>Windows 8.1</option>
-            <option>Windows 7</option>
-            <option>Windows XP</option>
-            <option>Windows Server</option>
-        </optgroup>
-        <optgroup label="Khác">
-            <option>macOS</option>
-            <option>Linux (Ubuntu/CentOS)</option>
-            <option>ChromeOS</option>
-        </optgroup>
-    </select>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống Kiểm kê CNTT 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .bg-connected { background: #d4edda; color: #155724; }
+        .bg-disconnected { background: #f8d7da; color: #721c24; }
+        #qrModal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:30px; border:3px solid #0d6efd; z-index: 99999; text-align:center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        @media print { body * { visibility: hidden; } #qrModal, #qrModal * { visibility: visible; } }
+    </style>
+</head>
+<body class="bg-light p-4">
+
+<div class="card shadow p-4" style="max-width: 1200px; margin: auto;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-primary m-0">PHIẾU KIỂM KÊ CNTT 2026</h4>
+        <div id="connStatus" class="status-pill bg-secondary text-white">Đang khởi tạo...</div>
+    </div>
+
+    <form id="surveyForm" class="mb-5">
+        <div class="row g-3">
+            <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
+            <div class="col-md-3"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
+            <div class="col-md-3"><label>Ngày kiểm kê</label><input type="date" id="check_date" class="form-control" required></div>
+            <div class="col-md-3"><label>Tình trạng</label><select id="status_device" class="form-select"><option>Tốt</option><option>Cần bảo trì</option><option>Hỏng</option></select></div>
+            
+            <div class="col-md-6"><label>Tên thiết bị</label><input type="text" id="device" class="form-control" required></div>
+            <div class="col-md-6"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control" required></div>
+
+            <div class="col-md-4"><label>Hệ điều hành</label>
+                <select id="os" class="form-select">
+                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option></optgroup>
+                    <optgroup label="Khác"><option>macOS</option><option>Linux</option></optgroup>
+                </select>
+            </div>
+            <div class="col-md-2"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+
+            <div class="col-md-4"><label>Bộ Office</label>
+                <select id="office" class="form-select">
+                    <option>Office 365</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>WPS Office</option>
+                </select>
+            </div>
+            <div class="col-md-2"><label>BQ Office</label><select id="office_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+
+            <div class="col-md-4"><label>PM Chuyên ngành</label>
+                <select id="others" class="form-select">
+                    <option value="ASIA Soft">ASIA Soft</option><option value="Quasoft">Quasoft</option><option value="MISA SME">MISA SME</option><option value="FAST">FAST</option>
+                </select>
+            </div>
+            <div class="col-md-2"><label>BQ PM khác</label><select id="others_license" class="form-select"><option>Chưa có</option><option>Có bản quyền</option></select></div>
+            
+            <div class="col-12"><label>Đề xuất / Kiến nghị</label><textarea id="note" class="form-control" rows="2"></textarea></div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">Lưu dữ liệu</button>
+                <button type="button" onclick="exportReport()" class="btn btn-success">Xuất Báo cáo chuẩn hành chính</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark"><tr><th>Bộ phận</th><th>Thiết bị</th><th>Người dùng</th><th>PM Chuyên ngành</th><th>Thao tác</th><th>QR</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
-<div class="col-md-4">
-    <label>Bộ phần mềm Office</label>
-    <select id="office" class="form-select">
-        <option>Office 365</option>
-        <option>Office 2021</option>
-        <option>Office 2019</option>
-        <option>Office 2016</option>
-        <option>Office 2013</option>
-        <option>Office 2010</option>
-        <option>Office 2007</option>
-        <option>Office 2003</option>
-        <option>WPS Office</option>
-        <option>LibreOffice</option>
-    </select>
+<div id="qrModal">
+    <h5>TEM THIẾT BỊ</h5>
+    <img id="qrImage" src="" style="width: 200px; height: 200px;">
+    <br><br><button class="btn btn-secondary" onclick="document.getElementById('qrModal').style.display='none'">Đóng</button>
+    <button class="btn btn-primary" onclick="window.print()">In Tem</button>
 </div>
+
+<script>
+    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+
+    async function init() {
+        try {
+            const { data, error } = await _sb.from('survey_devices').select('*');
+            if (error) throw error;
+            document.getElementById('connStatus').innerText = "Đã kết nối";
+            document.getElementById('connStatus').className = "status-pill bg-connected text-white";
+            if (data) {
+                document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
+                    <td>${r.department}</td><td>${r.device_name}</td><td>${r.full_name}</td><td>${r.other_software}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button></td>
+                    <td><button class="btn btn-sm btn-info" onclick="showQR('${r.device_name}', '${r.full_name}')">QR</button></td>
+                </tr>`).join('');
+            }
+        } catch (err) {
+            document.getElementById('connStatus').innerText = "Lỗi kết nối";
+            document.getElementById('connStatus').className = "status-pill bg-disconnected text-white";
+        }
+    }
+
+    function showQR(device, user) {
+        document.getElementById('qrImage').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent("TB: " + device + " | SD: " + user);
+        document.getElementById('qrModal').style.display = 'block';
+    }
+
+    async function deleteRow(id) { if(confirm('Xóa bản ghi này?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); } }
+
+    document.getElementById('surveyForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = {
+            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
+            check_date: document.getElementById('check_date').value, status_device: document.getElementById('status_device').value,
+            device_name: document.getElementById('device').value, specs: document.getElementById('specs').value,
+            os: document.getElementById('os').value, os_license: document.getElementById('os_license').value,
+            office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value,
+            other_software: document.getElementById('others').value, others_license: document.getElementById('others_license').value,
+            suggestions: document.getElementById('note').value
+        };
+        const { error } = await _sb.from('survey_devices').insert([data]);
+        if (error) alert("Lỗi: " + error.message); else { alert("Đã lưu!"); init(); }
+    };
+
+    function exportReport() {
+        _sb.from('survey_devices').select('*').then(({data}) => {
+            const report = [
+                ["CƠ QUAN CHỦ QUẢN", "", "", "", "", "", "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"],
+                ["TÊN ĐƠN VỊ", "", "", "", "", "", "Độc lập - Tự do - Hạnh phúc"],
+                [], ["BÁO CÁO THỐNG KÊ TÀI SẢN CNTT"], [],
+                ["STT", "Ngày", "Bộ phận", "Người dùng", "Thiết bị", "Cấu hình", "HĐH", "BQ HĐH", "Office", "BQ Office", "PM chuyên ngành", "BQ PM", "Trạng thái", "Kiến nghị"]
+            ];
+            data.forEach((r, i) => report.push([i+1, r.check_date, r.department, r.full_name, r.device_name, r.specs, r.os, r.os_license, r.office_version, r.office_license, r.other_software, r.others_license, r.status_device, r.suggestions]));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(report), "BaoCao");
+            XLSX.writeFile(wb, "Bao_cao_Kiem_ke_Hanh_chinh.xlsx");
+        });
+    }
+    init();
+</script>
+</body>
+</html>
