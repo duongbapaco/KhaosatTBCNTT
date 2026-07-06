@@ -5,17 +5,12 @@
     <title>Hệ thống Kiểm kê CNTT 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
-        .bg-connected { background: #d4edda; color: #155724; }
-    </style>
+    <style>.table-warning { background-color: #fff3cd !important; }</style>
 </head>
 <body class="bg-light p-4">
-
 <div class="card shadow p-4" style="max-width: 1200px; margin: auto;">
     <h4 class="text-primary mb-4">HỆ THỐNG KIỂM KÊ TÀI SẢN CNTT 2026</h4>
-    <div id="connStatus" class="status-pill bg-secondary text-white mb-3">Đang kết nối...</div>
-
+    
     <form id="surveyForm" class="mb-4 border p-3 rounded bg-white">
         <input type="hidden" id="editId">
         <div class="row g-3">
@@ -24,23 +19,26 @@
             <div class="col-md-3"><label>Thiết bị</label><input type="text" id="device" class="form-control" required></div>
             <div class="col-md-3"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" required></div>
             
-            <div class="col-md-4"><label>Hệ điều hành</label>
+            <div class="col-md-3"><label>PM Chuyên ngành</label>
+                <select id="others" class="form-select"><option value="Không">Không</option><option>ASIA Soft</option><option>Quasoft</option><option>MISA SME</option><option>FAST</option></select>
+            </div>
+            <div class="col-md-3"><label>Bản quyền PM</label>
+                <select id="license" class="form-select text-danger"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select>
+            </div>
+            <div class="col-md-3"><label>Hệ điều hành</label>
                 <select id="os" class="form-select">
-                    <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option>
-                    <option>Windows Server 2025</option><option>Windows Server 2022</option><option>macOS</option><option>Linux</option>
+                    <optgroup label="Windows Desktop"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option></optgroup>
+                    <optgroup label="Windows Server"><option>Windows Server 2025</option><option>Windows Server 2022</option><option>Windows Server 2019</option></optgroup>
+                    <optgroup label="Khác"><option>macOS</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
                 </select>
             </div>
-            <div class="col-md-4"><label>Bộ Office</label>
+            <div class="col-md-3"><label>Bộ Office</label>
                 <select id="office" class="form-select">
-                    <option>Office 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
-                    <option>Office 2016</option><option>WPS Office</option><option>LibreOffice</option>
+                    <optgroup label="Microsoft Office"><option>Office 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option></optgroup>
+                    <optgroup label="Miễn phí/Thay thế"><option>WPS Office</option><option>LibreOffice</option><option>Google Workspace</option></optgroup>
                 </select>
             </div>
-            <div class="col-md-4"><label>PM Chuyên ngành</label>
-                <select id="others" class="form-select">
-                    <option value="Không">Không</option><option>ASIA Soft</option><option>Quasoft</option><option>MISA SME</option><option>FAST</option>
-                </select>
-            </div>
+            
             <div class="col-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-12 text-end">
                 <button type="submit" id="submitBtn" class="btn btn-primary">Lưu dữ liệu</button>
@@ -49,12 +47,9 @@
         </div>
     </form>
 
-    <div class="mb-3"><select id="deptFilter" class="form-select w-25" onchange="filterData()"><option value="Tất cả">Lọc theo bộ phận (Tất cả)</option></select></div>
-
+    <div class="mb-3"><select id="deptFilter" class="form-select w-25" onchange="filterData()"><option value="Tất cả">Lọc bộ phận (Tất cả)</option></select></div>
     <table class="table table-bordered bg-white">
-        <thead class="table-dark">
-            <tr><th>Thiết bị</th><th>SL</th><th>Người dùng</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th></tr>
-        </thead>
+        <thead class="table-dark"><tr><th>Thiết bị</th><th>Người dùng</th><th>PM Chuyên ngành</th><th>Bản quyền</th><th>OS/Office</th><th>Thao tác</th></tr></thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
@@ -64,24 +59,20 @@
     let allData = [];
 
     async function init() {
-        const { data, error } = await _sb.from('survey_devices').select('*');
-        if (error) { alert("Lỗi tải dữ liệu: " + error.message); return; }
-        allData = data || [];
+        const { data } = await _sb.from('survey_devices').select('*');
+        allData = (data || []).sort((a, b) => (a.license_status === "Chưa có" ? -1 : 1));
         const depts = [...new Set(allData.map(r => r.department))];
-        const filter = document.getElementById('deptFilter');
-        filter.innerHTML = '<option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+        document.getElementById('deptFilter').innerHTML = '<option value="Tất cả">Lọc bộ phận (Tất cả)</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
         renderTable(allData);
     }
 
     function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-            <td>${r.device_name || ''}</td><td>${r.qty || 1}</td><td>${r.full_name || ''}</td><td>${r.department || ''}</td>
-            <td>${r.os || ''}</td><td>${r.office_version || ''}</td><td>${r.other_software || 'Không'}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button>
-            </td>
-        </tr>`).join('');
+        document.getElementById('tableBody').innerHTML = data.map(r => `
+            <tr class="${r.license_status === 'Chưa có' ? 'table-warning' : ''}">
+                <td>${r.device_name||''}</td><td>${r.full_name||''}</td><td>${r.other_software||'Không'}</td>
+                <td><strong>${r.license_status||''}</strong></td><td>${r.os||''}/${r.office_version||''}</td>
+                <td><button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button> <button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button></td>
+            </tr>`).join('');
     }
 
     function filterData() {
@@ -90,52 +81,35 @@
     }
 
     function editRow(id) {
-        const item = allData.find(r => r.id === id);
-        document.getElementById('editId').value = item.id;
-        document.getElementById('dept').value = item.department || "";
-        document.getElementById('user').value = item.full_name || "";
-        document.getElementById('device').value = item.device_name || "";
-        document.getElementById('qty').value = item.qty || 1;
-        document.getElementById('os').value = item.os || "Windows 11";
-        document.getElementById('office').value = item.office_version || "Office 365";
-        document.getElementById('others').value = item.other_software || "Không";
-        document.getElementById('specs').value = item.specs || "";
+        const r = allData.find(x => x.id === id);
+        document.getElementById('editId').value = r.id;
+        document.getElementById('dept').value = r.department;
+        document.getElementById('user').value = r.full_name;
+        document.getElementById('device').value = r.device_name;
+        document.getElementById('qty').value = r.qty;
+        document.getElementById('others').value = r.other_software;
+        document.getElementById('license').value = r.license_status;
+        document.getElementById('os').value = r.os;
+        document.getElementById('office').value = r.office_version;
+        document.getElementById('specs').value = r.specs;
         document.getElementById('submitBtn').innerText = "Cập nhật dữ liệu";
         window.scrollTo(0, 0);
     }
 
     document.getElementById('surveyForm').onsubmit = async (e) => {
         e.preventDefault();
-        const id = document.getElementById('editId').value;
         const payload = {
-            department: document.getElementById('dept').value,
-            full_name: document.getElementById('user').value,
-            device_name: document.getElementById('device').value,
-            qty: parseInt(document.getElementById('qty').value),
-            os: document.getElementById('os').value,
-            office_version: document.getElementById('office').value,
-            other_software: document.getElementById('others').value,
-            specs: document.getElementById('specs').value
+            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
+            device_name: document.getElementById('device').value, qty: parseInt(document.getElementById('qty').value),
+            other_software: document.getElementById('others').value, license_status: document.getElementById('license').value,
+            os: document.getElementById('os').value, office_version: document.getElementById('office').value, specs: document.getElementById('specs').value
         };
-
-        if (id) {
-            const { error } = await _sb.from('survey_devices').update(payload).eq('id', id);
-            if (error) alert("Lỗi cập nhật: " + error.message);
-            else alert("Cập nhật thành công!");
-        } else {
-            const { error } = await _sb.from('survey_devices').insert([payload]);
-            if (error) alert("Lỗi thêm mới: " + error.message);
-            else alert("Đã thêm mới thành công!");
-        }
+        await _sb.from('survey_devices').upsert([{ id: document.getElementById('editId').value || undefined, ...payload }]);
         resetForm(); init();
     };
 
     async function deleteRow(id) {
-        const pass = prompt("Nhập mật khẩu xóa:");
-        if (pass === "123456") {
-            await _sb.from('survey_devices').delete().eq('id', id);
-            init();
-        } else { alert("Mật khẩu sai!"); }
+        if (prompt("Nhập mật khẩu xóa:") === "123456") { await _sb.from('survey_devices').delete().eq('id', id); init(); }
     }
 
     function resetForm() { document.getElementById('surveyForm').reset(); document.getElementById('editId').value = ""; document.getElementById('submitBtn').innerText = "Lưu dữ liệu"; }
