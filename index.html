@@ -7,6 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+        #status-bar { position: fixed; top: 10px; right: 10px; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; z-index: 10000; }
+        .online { background: #d1e7dd; color: #0f5132; }
+        .offline { background: #f8d7da; color: #842029; }
         #qr-container { display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 3px solid #0d6efd; z-index: 9999; box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center; border-radius: 15px; }
         #qrcode-preview { margin: 15px auto; width: 200px; height: 200px; }
         @media print { .no-print { display: none; } #qr-container { position: static; border: none; } }
@@ -14,13 +17,12 @@
 </head>
 <body class="bg-light p-4">
 
+    <div id="status-bar" class="offline">Đang kết nối...</div>
+
     <div id="qr-container">
         <h5 id="qr-title" class="text-primary fw-bold">TEM TÀI SẢN</h5>
         <div id="qrcode-preview"></div>
-        <div class="no-print">
-            <button class="btn btn-primary" onclick="window.print()">🖨️ In Tem</button>
-            <button class="btn btn-secondary" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button>
-        </div>
+        <div class="no-print"><button class="btn btn-primary" onclick="window.print()">🖨️ In Tem</button> <button class="btn btn-secondary" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button></div>
     </div>
 
     <div class="card p-4 shadow" style="max-width: 1500px; margin: auto;">
@@ -45,6 +47,7 @@
                         <option>Server 2012 R2</option><option>Server 2012</option><option>Server 2008 R2</option><option>Server 2008</option>
                         <option>Server 2003</option><option>Server 2000</option>
                     </optgroup>
+                    <optgroup label="Khác"><option>macOS</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
@@ -74,8 +77,8 @@
             <div class="col-md-6"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
             
             <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary px-4" id="submitBtn">Lưu Dữ Liệu</button>
-                <button type="button" class="btn btn-success" onclick="exportData()">Xuất File Excel (CSV)</button>
+                <button type="submit" class="btn btn-primary px-4">Lưu Dữ Liệu</button>
+                <button type="button" class="btn btn-success" onclick="exportData()">Xuất File CSV</button>
             </div>
         </form>
 
@@ -87,66 +90,40 @@
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
-    const PASS = 'admin123';
-
-    function showQR(id, title) {
-        document.getElementById("qr-title").innerText = "Tài sản: " + title;
-        const container = document.getElementById("qrcode-preview");
-        container.innerHTML = "";
-        new QRCode(container, { text: "ID:" + id, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.L });
-        document.getElementById("qr-container").style.display = "block";
-    }
 
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
-        document.getElementById('tableBody').innerHTML = (data||[]).map(r => `
-            <tr>
-                <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
-                <td>${r.quantity || 1}</td>
-                <td>HĐH: ${r.os} (${r.os_license})<br>Off: ${r.office_version} (${r.office_license})<br>PM: ${r.special_pm} (${r.pm_license})</td>
-                <td>${r.specs}<br><i>Đề xuất: ${r.proposal}</i></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="showQR('${r.id}', '${r.device_name}')">QR</button>
-                    <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
-                </td>
-            </tr>`).join('');
+        if(data) {
+            document.getElementById('tableBody').innerHTML = data.map(r => `
+                <tr>
+                    <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
+                    <td>${r.quantity}</td>
+                    <td>HĐH: ${r.os} (${r.os_license})<br>Off: ${r.office_version} (${r.office_license})<br>PM: ${r.special_pm} (${r.pm_license})</td>
+                    <td>${r.specs}<br><i>Đề xuất: ${r.proposal}</i></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="showQR('${r.id}', '${r.device_name}')">QR</button>
+                        <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
+                    </td>
+                </tr>`).join('');
+            document.getElementById('status-bar').innerText = "● Trực tuyến"; document.getElementById('status-bar').className = "online";
+        }
     }
 
-    async function deleteRow(id) { if(prompt("Nhập mật khẩu quản trị:") === PASS) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); } }
-    
     document.getElementById('dataForm').onsubmit = async (e) => {
         e.preventDefault();
-        const id = document.getElementById('editId').value;
         const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, os_license: document.getElementById('os_license').value, office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value, special_pm: document.getElementById('pm').value, pm_license: document.getElementById('pm_license').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value };
+        const id = document.getElementById('editId').value;
         if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]);
         loadData(); document.getElementById('dataForm').reset(); document.getElementById('editId').value = '';
     };
 
-    function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity || 1; document.getElementById('os').value=r.os; document.getElementById('os_license').value=r.os_license; document.getElementById('office').value=r.office_version; document.getElementById('office_license').value=r.office_license; document.getElementById('pm').value=r.special_pm; document.getElementById('pm_license').value=r.pm_license; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; window.scrollTo(0,0); }
-
-    function exportData() {
-        let csv = [];
-        const rows = document.querySelectorAll("#reportTable tr");
-        rows.forEach(row => {
-            let rowData = [];
-            let cols = row.querySelectorAll("th, td");
-            cols.forEach((col, idx) => {
-                if(idx < 4) {
-                    let text = col.innerText.replace(/QR|Sửa|Xóa/g, "").replace(/\n/g, " | ").trim();
-                    rowData.push('"' + text + '"');
-                }
-            });
-            csv.push(rowData.join(","));
-        });
-        const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Bao_Cao_Tai_San.csv";
-        link.click();
-    }
+    function showQR(id, title) { document.getElementById("qr-title").innerText = "Tài sản: " + title; const container = document.getElementById("qrcode-preview"); container.innerHTML = ""; new QRCode(container, { text: "ID:" + id, width: 200, height: 200 }); document.getElementById("qr-container").style.display = "block"; }
+    function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity; document.getElementById('os').value=r.os; document.getElementById('os_license').value=r.os_license; document.getElementById('office').value=r.office_version; document.getElementById('office_license').value=r.office_license; document.getElementById('pm').value=r.special_pm; document.getElementById('pm_license').value=r.pm_license; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; window.scrollTo(0,0); }
+    async function deleteRow(id) { if(confirm("Xóa tài sản này?")) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); } }
+    function exportData() { let csv = []; document.querySelectorAll("#reportTable tr").forEach(row => { let rowData = []; row.querySelectorAll("th, td").forEach((col, idx) => { if(idx < 4) rowData.push('"' + col.innerText.replace(/"/g, '""').replace(/\n/g, ' - ') + '"'); }); csv.push(rowData.join(",")); }); const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Tai_San_2026.csv"; link.click(); }
     
-    loadData();
+    loadData(); setInterval(loadData, 30000);
 </script>
 </body>
 </html>
