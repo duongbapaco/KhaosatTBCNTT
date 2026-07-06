@@ -15,7 +15,7 @@
 
 <div class="card shadow p-4" style="max-width: 1200px; margin: auto;">
     <h4 class="text-primary mb-4">HỆ THỐNG KIỂM KÊ TÀI SẢN CNTT 2026</h4>
-    <div id="connStatus" class="status-pill bg-secondary text-white mb-3">Đang khởi tạo...</div>
+    <div id="connStatus" class="status-pill bg-secondary text-white mb-3">Đang kết nối...</div>
 
     <form id="surveyForm" class="mb-5">
         <input type="hidden" id="editId">
@@ -28,13 +28,13 @@
             <div class="col-md-4"><label>Hệ điều hành</label>
                 <select id="os" class="form-select">
                     <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option>
-                    <option>Windows Server</option><option>macOS</option><option>Linux</option>
+                    <option>macOS</option><option>Linux</option>
                 </select>
             </div>
             <div class="col-md-4"><label>Bộ Office</label>
                 <select id="office" class="form-select">
                     <option>Office 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
-                    <option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>WPS Office</option>
+                    <option>Office 2016</option><option>Office 2013</option><option>WPS Office</option>
                 </select>
             </div>
             <div class="col-md-4"><label>PM Chuyên ngành</label>
@@ -46,7 +46,6 @@
                     <option value="FAST">FAST</option>
                 </select>
             </div>
-
             <div class="col-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control" required></div>
 
             <div class="col-12 text-end">
@@ -56,10 +55,16 @@
         </div>
     </form>
 
-    <table class="table table-bordered">
-        <thead class="table-dark"><tr><th>Thiết bị</th><th>SL</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th></tr></thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Thiết bị</th><th>SL</th><th>Bộ phận</th><th>Người dùng</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -71,8 +76,15 @@
             if (error) throw error;
             document.getElementById('connStatus').innerText = "Đã kết nối";
             document.getElementById('connStatus').className = "status-pill bg-connected text-white";
+            
             document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-                <td>${r.device_name}</td><td>${r.qty}</td><td>${r.os}</td><td>${r.office_version}</td><td>${r.other_software}</td>
+                <td>${r.device_name || ''}</td>
+                <td>${r.qty || 1}</td>
+                <td>${r.department || ''}</td>
+                <td>${r.full_name || ''}</td>
+                <td>${r.os || ''}</td>
+                <td>${r.office_version || ''}</td>
+                <td>${r.other_software || 'Không'}</td>
                 <td>
                     <button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteRow(${r.id})">Xóa</button>
@@ -86,15 +98,15 @@
 
     function editRow(id) {
         _sb.from('survey_devices').select('*').eq('id', id).single().then(({data}) => {
-            document.getElementById('editId').value = data.id;
-            document.getElementById('dept').value = data.department;
-            document.getElementById('user').value = data.full_name;
-            document.getElementById('device').value = data.device_name;
-            document.getElementById('qty').value = data.qty;
-            document.getElementById('os').value = data.os;
-            document.getElementById('office').value = data.office_version;
-            document.getElementById('others').value = data.other_software;
-            document.getElementById('specs').value = data.specs;
+            document.getElementById('editId').value = data.id || "";
+            document.getElementById('dept').value = data.department || "";
+            document.getElementById('user').value = data.full_name || "";
+            document.getElementById('device').value = data.device_name || "";
+            document.getElementById('qty').value = data.qty || 1;
+            document.getElementById('os').value = data.os || "Windows 10";
+            document.getElementById('office').value = data.office_version || "Office 365";
+            document.getElementById('others').value = data.other_software || "Không";
+            document.getElementById('specs').value = data.specs || "";
             document.getElementById('submitBtn').innerText = "Cập nhật dữ liệu";
             window.scrollTo(0, 0);
         });
@@ -107,7 +119,7 @@
             department: document.getElementById('dept').value,
             full_name: document.getElementById('user').value,
             device_name: document.getElementById('device').value,
-            qty: document.getElementById('qty').value,
+            qty: parseInt(document.getElementById('qty').value),
             os: document.getElementById('os').value,
             office_version: document.getElementById('office').value,
             other_software: document.getElementById('others').value,
@@ -118,8 +130,14 @@
         resetForm(); init();
     };
 
-    function resetForm() { document.getElementById('surveyForm').reset(); document.getElementById('editId').value = ""; document.getElementById('submitBtn').innerText = "Lưu dữ liệu"; }
+    function resetForm() { 
+        document.getElementById('surveyForm').reset(); 
+        document.getElementById('editId').value = ""; 
+        document.getElementById('submitBtn').innerText = "Lưu dữ liệu"; 
+    }
+    
     async function deleteRow(id) { if(confirm('Bạn có chắc muốn xóa?')) { await _sb.from('survey_devices').delete().eq('id', id); init(); } }
+    
     init();
 </script>
 </body>
