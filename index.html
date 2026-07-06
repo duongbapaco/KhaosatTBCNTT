@@ -9,12 +9,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         #qrcode img { margin: auto; border: 5px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        .table-responsive { max-height: 500px; overflow-y: auto; }
+        .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body class="bg-light p-4">
 <div class="card p-4 shadow" style="max-width: 1500px; margin: auto;">
-    <h3 class="text-center text-uppercase fw-bold text-primary mb-4">HỆ THỐNG KIỂM KÊ & QUẢN TRỊ TÀI SẢN CNTT 2026</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-uppercase fw-bold text-primary">HỆ THỐNG KIỂM KÊ 2026</h3>
+        <div id="cloudStatus" class="badge bg-secondary">
+            <span class="status-dot bg-warning"></span> Đang kiểm tra kết nối...
+        </div>
+    </div>
 
     <div class="row mb-4">
         <div class="col-md-4"><div class="card bg-warning p-3 text-center"><h6>Chưa có bản quyền</h6><h3 id="missingLicenseCount">0</h3></div></div>
@@ -51,8 +56,7 @@
         </div>
     </form>
 
-    <div class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm hoặc lọc (VD: Chưa có)..." onkeyup="filterTable()"></div>
-    
+    <div class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm hoặc lọc dữ liệu (VD: Chưa có)..." onkeyup="filterTable()"></div>
     <div class="card p-3 mb-4 text-center">
         <h6>Mã QR tài sản (Nhấp vào dòng trong bảng để tạo mã):</h6>
         <div id="qrcode" class="mt-2"></div>
@@ -72,7 +76,23 @@
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
     const qrcode = new QRCode("qrcode", { width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
+    // Kiểm tra kết nối Cloud
+    async function checkConnection() {
+        const statusEl = document.getElementById('cloudStatus');
+        try {
+            const { error } = await _sb.from('survey_devices').select('id', { count: 'exact', head: true });
+            if (!error) {
+                statusEl.className = "badge bg-success";
+                statusEl.innerHTML = '<span class="status-dot bg-white"></span> Cloud Online';
+            }
+        } catch (e) {
+            statusEl.className = "badge bg-danger";
+            statusEl.innerHTML = '<span class="status-dot bg-white"></span> Cloud Offline';
+        }
+    }
+
     async function loadData() {
+        checkConnection();
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
         renderTable(data || []);
         updateStats(data || []);
