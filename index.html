@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống Kiểm kê CNTT 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .status-pill { padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .bg-connected { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body class="bg-light p-4">
+
+<div class="card shadow p-4" style="max-width: 1200px; margin: auto;">
+    <h4 class="text-primary mb-4">HỆ THỐNG KIỂM KÊ TÀI SẢN CNTT 2026</h4>
+    <div id="connStatus" class="status-pill bg-secondary text-white mb-3">Đang kết nối...</div>
+
+    <form id="surveyForm" class="mb-4 border p-3 rounded bg-white">
+        <input type="hidden" id="editId">
+        <div class="row g-3">
+            <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
+            <div class="col-md-3"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
+            <div class="col-md-3"><label>Thiết bị</label><input type="text" id="device" class="form-control" required></div>
+            <div class="col-md-3"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" required></div>
+            
+            <div class="col-md-4"><label>OS</label>
+                <select id="os" class="form-select"><option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option></select>
+            </div>
+            <div class="col-md-4"><label>Office</label>
+                <select id="office" class="form-select"><option>Office 365</option><option>Office 2021</option><option>WPS Office</option></select>
+            </div>
+            <div class="col-md-4"><label>PM Chuyên ngành</label>
+                <select id="others" class="form-select"><option>Không</option><option>ASIA Soft</option><option>Quasoft</option><option>MISA SME</option></select>
+            </div>
+            <div class="col-12"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-12 text-end">
+                <button type="submit" id="submitBtn" class="btn btn-primary">Lưu dữ liệu</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-4">
+            <select id="deptFilter" class="form-select" onchange="filterData()">
+                <option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>
+            </select>
+        </div>
+        <div class="col-md-8 text-end">
+            <button class="btn btn-danger btn-sm" onclick="bulkUpdate()">Sửa cấu hình hàng loạt (dòng đã chọn)</button>
+        </div>
+    </div>
+
+    <table class="table table-bordered bg-white">
+        <thead class="table-dark">
+            <tr><th><input type="checkbox" id="selectAll"></th><th>Thiết bị</th><th>SL</th><th>Bộ phận</th><th>OS</th><th>Office</th><th>PM</th><th>Thao tác</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    let allData = [];
+
+    async function init() {
+        const { data } = await _sb.from('survey_devices').select('*');
+        allData = data || [];
+        document.getElementById('connStatus').innerText = "Đã kết nối";
+        document.getElementById('connStatus').className = "status-pill bg-connected text-white";
+        
+        // Cập nhật bộ lọc
+        const depts = [...new Set(allData.map(r => r.department))];
+        const filter = document.getElementById('deptFilter');
+        filter.innerHTML = '<option value="Tất cả">Lọc theo bộ phận (Tất cả)</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+        
+        renderTable(allData);
+    }
+
+    function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
+            <td><input type="checkbox" class="row-check" value="${r.id}"></td>
+            <td>${r.device_name || ''}</td><td>${r.qty || 1}</td><td>${r.department || ''}</td>
+            <td>${r.os || ''}</td><td>${r.office_version || ''}</td><td>${r.other_software || 'Không'}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editRow(${r.id})">Sửa</button>
+            </td>
+        </tr>`).join('');
+    }
+
+    function filterData() {
+        const val = document.getElementById('deptFilter').value;
+        renderTable(val === "Tất cả" ? allData : allData.filter(r => r.department === val));
+    }
+
+    async function bulkUpdate() {
+        const checked = document.querySelectorAll('.row-check:checked');
+        if(checked.length === 0) return alert("Vui lòng chọn ít nhất 1 thiết bị!");
+        const newSpec = prompt("Nhập cấu hình mới cho các mục đã chọn:");
+        if(!newSpec) return;
+        for(let item of checked) await _sb.from('survey_devices').update({ specs: newSpec }).eq('id', item.value);
+        alert("Đã cập nhật!"); init();
+    }
+
+    function editRow(id) {
+        _sb.from('survey_devices').select('*').eq('id', id).single().then(({data}) => {
+            document.getElementById('editId').value = data.id;
+            document.getElementById('dept').value = data.department || "";
+            document.getElementById('user').value = data.full_name || "";
+            document.getElementById('device').value = data.device_name || "";
+            document.getElementById('qty').value = data.qty || 1;
+            document.getElementById('os').value = data.os || "Windows 11";
+            document.getElementById('office').value = data.office_version || "Office 365";
+            document.getElementById('others').value = data.other_software || "Không";
+            document.getElementById('specs').value = data.specs || "";
+            document.getElementById('submitBtn').innerText = "Cập nhật dữ liệu";
+        });
+    }
+
+    document.getElementById('surveyForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const data = {
+            department: document.getElementById('dept').value, full_name: document.getElementById('user').value,
+            device_name: document.getElementById('device').value, qty: parseInt(document.getElementById('qty').value),
+            os: document.getElementById('os').value, office_version: document.getElementById('office').value,
+            other_software: document.getElementById('others').value, specs: document.getElementById('specs').value
+        };
+        if (id) await _sb.from('survey_devices').update(data).eq('id', id);
+        else await _sb.from('survey_devices').insert([data]);
+        document.getElementById('surveyForm').reset(); document.getElementById('editId').value = "";
+        init();
+    };
+
+    document.getElementById('selectAll').onclick = (e) => document.querySelectorAll('.row-check').forEach(c => c.checked = e.target.checked);
+    init();
+</script>
+</body>
+</html>
