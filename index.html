@@ -8,19 +8,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* CSS cho bảng và form */
         .table-responsive { overflow-x: auto; }
-        #reportTable { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; }
+        #pass-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
+        .pass-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body class="bg-light p-4">
+
+    <div id="pass-overlay">
+        <div class="pass-box text-center">
+            <h5>XÁC THỰC QUẢN TRỊ</h5>
+            <input type="password" id="passInput" class="form-control mb-3" placeholder="Nhập mật khẩu...">
+            <button class="btn btn-primary" onclick="checkPass()">Xác nhận</button>
+        </div>
+    </div>
 
     <div class="card p-4 shadow" style="max-width: 1400px; margin: auto;">
         <h3 class="text-primary fw-bold mb-4">HỆ THỐNG QUẢN TRỊ TÀI SẢN 2026</h3>
         
         <div class="mb-4">
-            <button class="btn btn-warning" onclick="printReport()">🖨️ In Báo Cáo (Chuẩn)</button>
+            <button class="btn btn-warning" onclick="printReport()">🖨️ In Báo Cáo (Chuẩn NĐ 30)</button>
             <button class="btn btn-success" onclick="exportFile()">📊 Xuất Excel</button>
         </div>
 
@@ -32,16 +39,21 @@
             <div class="col-md-1"><input type="number" id="qty" value="1" class="form-control" placeholder="SL"></div>
             <div class="col-md-2">
                 <select id="os" class="form-select">
-                    <option>Windows 11</option><option>Windows 10</option><option>macOS</option><option>Linux</option>
+                    <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Server 2025/2022/2019</option></optgroup>
+                    <optgroup label="Khác"><option>macOS</option><option>Ubuntu Linux</option></optgroup>
                 </select>
             </div>
-            <div class="col-md-3"><input type="text" id="proposal" class="form-control" placeholder="Đề xuất"></div>
-            <div class="col-md-12 text-end"><button type="submit" class="btn btn-primary">LƯU DỮ LIỆU</button></div>
+            <div class="col-md-3">
+                <input class="form-control" list="pmList" id="pm" placeholder="PM Chuyên ngành">
+                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise"><option value="MISA SME.NET"><option value="FAST Accounting"><option value="BRAVO"><option value="SAP"></datalist>
+            </div>
+            <div class="col-md-4"><input type="text" id="proposal" class="form-control" placeholder="Dữ liệu đề xuất"></div>
+            <div class="col-md-2 text-end"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
         </form>
 
         <div class="table-responsive">
             <table class="table table-bordered" id="reportTable">
-                <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
+                <thead class="table-dark"><tr><th>Thông tin</th><th>HĐH</th><th>PM</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -50,52 +62,36 @@
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
-    // 1. In báo cáo bằng luồng tách biệt (không bị chồng QR)
+    function checkPass() { if(document.getElementById('passInput').value === "123456") { document.getElementById('pass-overlay').style.display = 'none'; } else alert("Sai mật khẩu!"); }
+
     function printReport() {
-        const tableHtml = document.getElementById("reportTable").outerHTML;
-        const printWindow = window.open('', '_blank', 'width=900,height=600');
-        printWindow.document.write(`
-            <html><head><title>Báo cáo tài sản</title>
-            <style>
-                body { font-family: "Times New Roman", serif; padding: 20px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-            </style></head>
-            <body>
-                <h2 style="text-align:center;">BÁO CÁO THỐNG KÊ TÀI SẢN 2026</h2>
-                ${tableHtml.replace(/<th class="no-print">.*?<\/th>/g, '').replace(/<th.*?Thao tác<\/th>/g, '').replace(/<td class="no-print">.*?<\/td>/g, '')}
-            </body></html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><style>body{font-family:"Times New Roman";} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:5px; text-align:center;}</style></head><body>
+            <h3 style="text-align:center;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>BÁO CÁO THỐNG KÊ TÀI SẢN 2026</h3>
+            ${document.getElementById("reportTable").outerHTML.replace(/<th.*?Thao tác<\/th>/g, '').replace(/<td.*?>.*?<\/td>$/gm, '')}
+        </body></html>`);
+        setTimeout(() => { win.print(); }, 500);
     }
 
-    // 2. Tạo QR động (không làm rác DOM)
-    function showQR(id) { 
+    // Đảm bảo QR tạo xong mới hiển thị bằng setTimeout
+    function showQR(id) {
         const modal = document.createElement('div');
-        modal.style.cssText = "position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; padding:20px; border:2px solid #0d6efd; z-index:99999; box-shadow:0 0 10px #000;";
-        modal.innerHTML = `<h5 class="text-primary">MÃ QR</h5><div id="qr-canvas"></div><button class="btn btn-sm btn-secondary mt-2" onclick="this.parentElement.remove()">Đóng</button>`;
+        modal.id = "qr-modal";
+        modal.style.cssText = "position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; padding:20px; border:2px solid #000; z-index:99999;";
+        modal.innerHTML = `<h5>Mã QR</h5><div id="qr-c"></div><button class="btn btn-sm btn-secondary mt-2" onclick="this.parentElement.remove()">Đóng</button>`;
         document.body.appendChild(modal);
-        new QRCode(document.getElementById("qr-canvas"), { text: id, width: 200, height: 200, correctLevel: 3 });
+        
+        setTimeout(() => {
+            new QRCode(document.getElementById("qr-c"), {text: id, width:200, height:200, correctLevel: 3});
+        }, 100);
     }
 
-    // 3. Tải dữ liệu
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
-        if(data) {
-            document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-                <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
-                <td>${r.quantity}</td><td>${r.os}</td><td>${r.proposal || ''}</td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button>
-                    <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
-                </td>
-            </tr>`).join('');
-        }
+        if(data) document.getElementById('tableBody').innerHTML = data.map(r => `<tr><td><b>${r.department}</b><br>${r.full_name}</td><td>${r.os}</td><td>${r.special_pm}</td><td>${r.proposal}</td><td><button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button></td></tr>`).join('');
     }
 
-    // 4. Các hàm xử lý DB (giữ nguyên)
-    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); /* ... */ loadData(); };
+    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); await _sb.from('survey_devices').insert([{ department: document.getElementById('dept').value, full_name: document.getElementById('user').value, os: document.getElementById('os').value, special_pm: document.getElementById('pm').value, proposal: document.getElementById('proposal').value }]); loadData(); };
     function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao.xlsx"); }
     loadData();
 </script>
