@@ -8,8 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        #qr-container { display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 3px solid #0d6efd; z-index: 9999; box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center; border-radius: 15px; }
-        #qrcode-preview { margin: 15px auto; width: 150px; height: 150px; }
+        #qr-container, #pass-container { display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 3px solid #0d6efd; z-index: 9999; box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center; border-radius: 15px; }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
@@ -17,8 +16,14 @@
 
     <div id="qr-container" class="no-print">
         <h5 class="text-primary fw-bold">MÃ QR TÀI SẢN</h5>
-        <div id="qrcode-preview"></div>
-        <button class="btn btn-secondary mt-3" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button>
+        <div id="qrcode-preview" style="width: 150px; height: 150px; margin: 15px auto;"></div>
+        <button class="btn btn-secondary" onclick="this.parentElement.style.display='none'">Đóng</button>
+    </div>
+
+    <div id="pass-container" class="no-print">
+        <h5 class="text-danger">Xác thực mật khẩu</h5>
+        <input type="password" id="passInput" class="form-control mb-2" placeholder="Nhập mật khẩu...">
+        <button class="btn btn-primary" onclick="checkPass()">Xác nhận</button>
     </div>
 
     <div class="card p-4 shadow" style="max-width: 1500px; margin: auto;">
@@ -32,9 +37,9 @@
             <div class="col-md-1"><label>SL</label><input type="number" id="qty" value="1" class="form-control"></div>
             <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option></optgroup>
-                    <optgroup label="Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012</option><option>Server 2008</option></optgroup>
-                    <optgroup label="Khác"><option>macOS Sequoia</option><option>Ubuntu Linux</option></optgroup>
+                    <optgroup label="Windows Desktop"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option></optgroup>
+                    <optgroup label="Windows Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012</option><option>Server 2008</option></optgroup>
+                    <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
@@ -45,24 +50,22 @@
             </div>
             <div class="col-md-1"><label>BQ Office</label><select id="office_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
             <div class="col-md-2"><label>PM Chuyên ngành</label>
-                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc tự nhập">
-                <datalist id="pmList">
-                    <option value="Không có"><option value="ASIA Enterprise 2025"><option value="ASIA Standard"><option value="Quasoft ERP"><option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One">
-                </datalist>
+                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc nhập">
+                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise 2025"><option value="ASIA Standard"><option value="Quasoft ERP"><option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One"></datalist>
             </div>
             <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
             <div class="col-md-5"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-md-5"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
             <div class="col-md-2 text-end pt-4"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
             <div class="col-12 text-end">
-                <button type="button" class="btn btn-warning" onclick="window.print()">🖨️ In Báo Cáo</button>
-                <button type="button" class="btn btn-success" onclick="exportFile('xlsx')">📊 Xuất Excel</button>
-                <button type="button" class="btn btn-info" onclick="exportFile('doc')">📄 Xuất Word</button>
+                <button type="button" class="btn btn-warning" onclick="window.print()">🖨️ In</button>
+                <button type="button" class="btn btn-success" onclick="exportFile('xlsx')">📊 Excel</button>
+                <button type="button" class="btn btn-info" onclick="exportFile('doc')">📄 Word</button>
             </div>
         </form>
 
         <table class="table table-bordered table-hover" id="reportTable">
-            <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM Chuyên ngành</th><th>Cấu hình</th><th>Thao tác</th></tr></thead>
+            <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM Chuyên ngành</th><th>Cấu hình</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -70,12 +73,20 @@
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
     const PASS = "123456";
+    let pendingAction = {type: '', data: null};
 
-    async function secureAction(type, data) {
-        // Tạo dialog nhập mật khẩu ẩn
-        const p = prompt("Vui lòng nhập mật khẩu xác thực:");
-        if (p === PASS) { if (type === 'delete') deleteRow(data); else editRow(data); }
-        else if (p !== null) alert("Mật khẩu không hợp lệ!");
+    function secureAction(type, data) {
+        pendingAction = {type, data};
+        document.getElementById('pass-container').style.display = 'block';
+        document.getElementById('passInput').value = '';
+    }
+
+    function checkPass() {
+        if (document.getElementById('passInput').value === PASS) {
+            document.getElementById('pass-container').style.display = 'none';
+            if (pendingAction.type === 'delete') deleteRow(pendingAction.data);
+            else editRow(pendingAction.data);
+        } else alert("Sai mật khẩu!");
     }
 
     async function loadData() {
@@ -83,7 +94,12 @@
         if(data) {
             document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
                 <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
-                <td>${r.quantity}</td><td>${r.os}</td><td>${r.office_version}</td><td>${r.special_pm}</td><td>${r.specs}</td>
+                <td>${r.quantity}</td>
+                <td>${r.os}</td>
+                <td>${r.office_version}</td>
+                <td>${r.special_pm}</td>
+                <td>${r.specs || ''}</td>
+                <td>${r.proposal || ''}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button>
                     <button class="btn btn-sm btn-info" onclick="secureAction('edit', ${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
@@ -95,9 +111,9 @@
 
     function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity; document.getElementById('os').value=r.os; document.getElementById('office').value=r.office_version; document.getElementById('pm').value=r.special_pm; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; window.scrollTo(0,0); }
     async function deleteRow(id) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); }
-    function exportFile(type) { const t = document.getElementById("reportTable"); if(type==='xlsx') XLSX.writeFile(XLSX.utils.table_to_book(t), "BaoCao.xlsx"); else { const b = new Blob([t.outerHTML], {type: "application/msword"}); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = "BaoCao.doc"; a.click(); } }
+    function exportFile(type) { const t = document.getElementById("reportTable"); if(type==='xlsx') XLSX.writeFile(XLSX.utils.table_to_book(t), "BaoCao.xlsx"); else { const b = new Blob([t.outerHTML], {type: "application/msword"}); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "BaoCao.doc"; a.click(); } }
     function showQR(id) { document.getElementById("qrcode-preview").innerHTML = ""; new QRCode(document.getElementById("qrcode-preview"), id); document.getElementById("qr-container").style.display = "block"; }
-    
+
     document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, office_version: document.getElementById('office').value, special_pm: document.getElementById('pm').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value }; const id = document.getElementById('editId').value; if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]); loadData(); document.getElementById('dataForm').reset(); };
     loadData();
 </script>
