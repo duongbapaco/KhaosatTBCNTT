@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống Quản trị Tài sản 2026</title>
+    <title>QUẢN TRỊ TÀI SẢN CNTT 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -10,7 +10,7 @@
     <style>
         .table thead { background: #343a40; color: white; }
         .bg-warning-light { background-color: #fff3cd !important; }
-        #qr-overlay { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border: 2px solid #000; z-index: 9999; box-shadow: 0 0 15px rgba(0,0,0,0.5); display: none; }
+        #qr-overlay { position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border: 2px solid #000; z-index: 9999; box-shadow: 0 0 15px rgba(0,0,0,0.5); display: none; }
     </style>
 </head>
 <body class="bg-light p-3">
@@ -19,7 +19,7 @@
     <h3 class="text-primary fw-bold">QUẢN TRỊ TÀI SẢN CNTT 2026</h3>
     
     <div class="row g-2 mb-3">
-        <div class="col-md-3"><input type="text" id="filterDept" class="form-control" placeholder="Lọc theo bộ phận..." oninput="renderTable()"></div>
+        <div class="col-md-3"><input type="text" id="filterDept" class="form-control" placeholder="Lọc bộ phận..." oninput="renderTable()"></div>
         <div class="col-md-9 text-end">
             <button class="btn btn-warning" onclick="printReport()">🖨️ In Báo Cáo</button>
             <button class="btn btn-success" onclick="exportFile()">📊 Xuất Excel</button>
@@ -32,18 +32,9 @@
         <div class="col-md-2"><input type="text" id="user" class="form-control" placeholder="Người dùng" required></div>
         <div class="col-md-2"><input type="text" id="device" class="form-control" placeholder="Tên thiết bị"></div>
         <div class="col-md-1"><input type="number" id="qty" value="1" class="form-control" placeholder="SL"></div>
-        <div class="col-md-2">
-            <select id="os" class="form-select">
-                <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 7</option><option>Win XP</option><option>Server 2025/2022/2019/2016/2012</option></optgroup>
-                <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Ubuntu/Debian/CentOS</option></optgroup>
-            </select>
-        </div>
+        <div class="col-md-2"><input type="text" id="os" class="form-control" placeholder="HĐH"></div>
         <div class="col-md-1"><select id="os_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
-        <div class="col-md-2">
-            <select id="office" class="form-select">
-                <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2010</option>
-            </select>
-        </div>
+        <div class="col-md-2"><input type="text" id="office" class="form-control" placeholder="Office"></div>
         <div class="col-md-1"><select id="off_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
         <div class="col-md-2"><input type="text" id="pm" class="form-control" placeholder="PM khác"></div>
         <div class="col-md-1"><select id="pm_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
@@ -54,7 +45,7 @@
 
     <div class="table-responsive">
         <table class="table table-bordered" id="reportTable">
-            <thead><tr><th>Thông tin</th><th>HĐH</th><th>Office</th><th>PM Khác</th><th>Cấu hình</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>Bộ phận</th><th>Người dùng</th><th>Thiết bị</th><th>HĐH</th><th>Office</th><th>PM khác</th><th>Cấu hình</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -67,6 +58,7 @@
     let dbData = [];
 
     async function loadData() {
+        // Lấy tất cả dữ liệu
         const { data } = await _sb.from('survey_devices').select('*');
         dbData = data || [];
         renderTable();
@@ -74,12 +66,14 @@
 
     function renderTable() {
         const filter = document.getElementById('filterDept').value.toLowerCase();
+        // Lọc và render đầy đủ các trường
         const filtered = dbData.filter(r => (r.department || '').toLowerCase().includes(filter));
-        filtered.sort((a,b) => ((a.os_lic || 'Chưa có') === 'Chưa có' ? -1 : 1));
         
         document.getElementById('tableBody').innerHTML = filtered.map(r => `
-            <tr class="${(r.os_lic || '') === 'Chưa có' ? 'bg-warning-light' : ''}">
-                <td><b>${r.department || ''}</b><br>${r.user || ''}<br>${r.device || ''} (SL: ${r.quantity || 1})</td>
+            <tr class="${(r.os_lic === 'Chưa có' || r.off_lic === 'Chưa có') ? 'bg-warning-light' : ''}">
+                <td>${r.department || ''}</td>
+                <td>${r.user || ''}</td>
+                <td>${r.device || ''} (SL: ${r.quantity || 1})</td>
                 <td>${r.os || ''} (${r.os_lic || ''})</td>
                 <td>${r.office || ''} (${r.off_lic || ''})</td>
                 <td>${r.pm || ''} (${r.pm_lic || ''})</td>
@@ -101,7 +95,6 @@
     function deleteRow(id) {
         let pass = prompt("Nhập mật khẩu (Enter để xóa):");
         if (pass === "123456") _sb.from('survey_devices').delete().eq('id', id).then(loadData);
-        else if (pass !== null) alert("Sai mật khẩu!");
     }
 
     document.getElementById('dataForm').onsubmit = async (e) => {
@@ -117,14 +110,13 @@
         loadData();
     };
 
+    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao.xlsx"); }
     function exportWord() {
         const html = `<html><meta charset="utf-8"><body>` + document.getElementById('reportTable').outerHTML + `</body></html>`;
-        const blob = new Blob([html], {type: 'application/msword'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'BaoCao_TaiSan.doc'; a.click();
+        a.href = URL.createObjectURL(new Blob([html], {type: 'application/msword'}));
+        a.download = 'BaoCao.doc'; a.click();
     }
-
-    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao.xlsx"); }
     function printReport() { 
         const win = window.open('', '_blank');
         win.document.write('<html><body>' + document.getElementById('reportTable').outerHTML + '</body></html>');
