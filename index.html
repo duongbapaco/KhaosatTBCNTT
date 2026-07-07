@@ -37,16 +37,8 @@
             
             <div class="col-md-2"><label>Hệ điều hành</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows Desktop">
-                        <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 8</option>
-                        <option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option>
-                        <option>Windows Me</option><option>Windows 98</option><option>Windows 95</option>
-                    </optgroup>
-                    <optgroup label="Windows Server">
-                        <option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option>
-                        <option>Server 2012 R2</option><option>Server 2012</option><option>Server 2008 R2</option><option>Server 2008</option>
-                        <option>Server 2003</option><option>Server 2000</option>
-                    </optgroup>
+                    <optgroup label="Windows Desktop"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 8</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows Me</option><option>Windows 98</option><option>Windows 95</option></optgroup>
+                    <optgroup label="Windows Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012 R2</option><option>Server 2012</option><option>Server 2008 R2</option><option>Server 2008</option><option>Server 2003</option><option>Server 2000</option></optgroup>
                     <optgroup label="Khác"><option>macOS</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
                 </select>
             </div>
@@ -54,23 +46,12 @@
             
             <div class="col-md-2"><label>Office</label>
                 <select id="office" class="form-select">
-                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
-                    <option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option>
-                    <option>Office 2003</option><option>Office XP (2002)</option><option>Office 2000</option><option>Office 97</option><option>Office 95</option>
+                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option><option>Office XP (2002)</option><option>Office 2000</option><option>Office 97</option><option>Office 95</option>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ Off</label><select id="office_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
             
-            <div class="col-md-2"><label>PM Chuyên ngành</label>
-                <input class="form-control" list="pmList" id="pm">
-                <datalist id="pmList">
-                    <option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="ASIA Standard">
-                    <option value="Quasoft ERP"><option value="Quasoft CRM"><option value="Quasoft HRM">
-                    <option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="FAST Accounting 11">
-                    <option value="FAST Business"><option value="BRAVO 8R3"><option value="SAP Business One">
-                    <option value="Không có">
-                </datalist>
-            </div>
+            <div class="col-md-2"><label>PM Chuyên ngành</label><input class="form-control" list="pmList" id="pm"><datalist id="pmList"><option value="ASIA Enterprise 2025"><option value="MISA SME.NET 2024"><option value="Không có"></datalist></div>
             <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
             
             <div class="col-md-6"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
@@ -81,6 +62,10 @@
                 <button type="button" class="btn btn-success" onclick="exportData()">Xuất File CSV</button>
             </div>
         </form>
+
+        <div class="mb-3">
+            <input type="text" id="filterInput" class="form-control border-primary" placeholder="🔍 Tìm kiếm thông minh (Nhập bộ phận, tên, thiết bị, HĐH, Office...)" onkeyup="filterTable()">
+        </div>
 
         <table class="table table-bordered table-hover" id="reportTable">
             <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH/Off/PM</th><th>Cấu hình & Đề xuất</th><th>Thao tác</th></tr></thead>
@@ -94,20 +79,35 @@
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
         if(data) {
-            document.getElementById('tableBody').innerHTML = data.map(r => `
-                <tr>
-                    <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
-                    <td>${r.quantity}</td>
-                    <td>HĐH: ${r.os} (${r.os_license})<br>Off: ${r.office_version} (${r.office_license})<br>PM: ${r.special_pm} (${r.pm_license})</td>
-                    <td>${r.specs}<br><i>Đề xuất: ${r.proposal}</i></td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="showQR('${r.id}', '${r.device_name}')">QR</button>
-                        <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
-                    </td>
-                </tr>`).join('');
+            window.appData = data; // Lưu vào biến toàn cục để lọc
+            renderTable(data);
             document.getElementById('status-bar').innerText = "● Trực tuyến"; document.getElementById('status-bar').className = "online";
         }
+    }
+
+    function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = data.map(r => `
+            <tr>
+                <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
+                <td>${r.quantity}</td>
+                <td>HĐH: ${r.os} (${r.os_license})<br>Off: ${r.office_version} (${r.office_license})<br>PM: ${r.special_pm} (${r.pm_license})</td>
+                <td>${r.specs}<br><i>Đề xuất: ${r.proposal}</i></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="showQR('${r.id}', '${r.device_name}')">QR</button>
+                    <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function filterTable() {
+        const term = document.getElementById('filterInput').value.toLowerCase();
+        const filtered = window.appData.filter(r => 
+            r.department.toLowerCase().includes(term) || r.full_name.toLowerCase().includes(term) || 
+            r.device_name.toLowerCase().includes(term) || r.os.toLowerCase().includes(term) || 
+            r.office_version.toLowerCase().includes(term)
+        );
+        renderTable(filtered);
     }
 
     document.getElementById('dataForm').onsubmit = async (e) => {
