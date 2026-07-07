@@ -32,9 +32,9 @@
             <div class="col-md-1"><label>SL</label><input type="number" id="qty" value="1" class="form-control"></div>
             <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows Desktop"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option></optgroup>
-                    <optgroup label="Windows Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012</option><option>Server 2008</option></optgroup>
-                    <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
+                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option></optgroup>
+                    <optgroup label="Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012</option><option>Server 2008</option></optgroup>
+                    <optgroup label="Khác"><option>macOS Sequoia</option><option>Ubuntu Linux</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
@@ -44,8 +44,12 @@
                 </select>
             </div>
             <div class="col-md-1"><label>BQ Office</label><select id="office_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
-            <div class="col-md-2"><label>PM Chuyên ngành</label><input class="form-control" list="pmList" id="pm">
-                <datalist id="pmList"><option value="ASIA Enterprise 2025"><option value="ASIA Standard"><option value="Quasoft ERP"><option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One"></datalist></div>
+            <div class="col-md-2"><label>PM Chuyên ngành</label>
+                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc tự nhập">
+                <datalist id="pmList">
+                    <option value="Không có"><option value="ASIA Enterprise 2025"><option value="ASIA Standard"><option value="Quasoft ERP"><option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One">
+                </datalist>
+            </div>
             <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
             <div class="col-md-5"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-md-5"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
@@ -67,10 +71,11 @@
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
     const PASS = "123456";
 
-    function secureAction(type, data) {
-        let p = prompt("Nhập mật khẩu (ẩn):");
+    async function secureAction(type, data) {
+        // Tạo dialog nhập mật khẩu ẩn
+        const p = prompt("Vui lòng nhập mật khẩu xác thực:");
         if (p === PASS) { if (type === 'delete') deleteRow(data); else editRow(data); }
-        else if (p !== null) alert("Mật khẩu sai!");
+        else if (p !== null) alert("Mật khẩu không hợp lệ!");
     }
 
     async function loadData() {
