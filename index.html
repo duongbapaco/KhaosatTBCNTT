@@ -9,19 +9,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .table-responsive { overflow-x: auto; }
-        #pass-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
-        .pass-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        /* Đảm bảo QR không bị vỡ */
+        #qr-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #fff; padding: 20px; border: 2px solid #0d6efd; z-index: 99999; box-shadow: 0 0 15px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body class="bg-light p-4">
-
-    <div id="pass-overlay">
-        <div class="pass-box text-center">
-            <h5>XÁC THỰC QUẢN TRỊ</h5>
-            <input type="password" id="passInput" class="form-control mb-3" placeholder="Nhập mật khẩu...">
-            <button class="btn btn-primary" onclick="checkPass()">Xác nhận</button>
-        </div>
-    </div>
 
     <div class="card p-4 shadow" style="max-width: 1400px; margin: auto;">
         <h3 class="text-primary fw-bold mb-4">HỆ THỐNG QUẢN TRỊ TÀI SẢN 2026</h3>
@@ -33,27 +25,36 @@
 
         <form id="dataForm" class="row g-3 bg-white p-3 border rounded mb-4">
             <input type="hidden" id="editId">
-            <div class="col-md-2"><input type="text" id="dept" class="form-control" placeholder="Bộ phận" required></div>
-            <div class="col-md-2"><input type="text" id="user" class="form-control" placeholder="Người dùng" required></div>
-            <div class="col-md-2"><input type="text" id="device" class="form-control" placeholder="Tên thiết bị"></div>
-            <div class="col-md-1"><input type="number" id="qty" value="1" class="form-control" placeholder="SL"></div>
-            <div class="col-md-2">
+            <div class="col-md-2"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
+            <div class="col-md-2"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
+            <div class="col-md-2"><label>Thiết bị</label><input type="text" id="device" class="form-control"></div>
+            <div class="col-md-1"><label>SL</label><input type="number" id="qty" value="1" class="form-control"></div>
+            <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Server 2025/2022/2019</option></optgroup>
-                    <optgroup label="Khác"><option>macOS</option><option>Ubuntu Linux</option></optgroup>
+                    <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Win XP</option><option>Server 2025/2022/2019/2016/2012</option></optgroup>
+                    <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Ubuntu Linux</option><option>CentOS</option><option>Debian</option></optgroup>
+                </select>
+            </div>
+            <div class="col-md-2"><label>Office</label>
+                <select id="office" class="form-select">
+                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <input class="form-control" list="pmList" id="pm" placeholder="PM Chuyên ngành">
-                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise"><option value="MISA SME.NET"><option value="FAST Accounting"><option value="BRAVO"><option value="SAP"></datalist>
+                <label>PM Chuyên ngành</label>
+                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc nhập">
+                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise 2025"><option value="MISA SME.NET 2024"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One"></datalist>
             </div>
-            <div class="col-md-4"><input type="text" id="proposal" class="form-control" placeholder="Dữ liệu đề xuất"></div>
-            <div class="col-md-2 text-end"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
+            <div class="col-md-4"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-4"><label>Dữ liệu đề xuất</label><input type="text" id="proposal" class="form-control"></div>
+            <div class="col-md-2 text-end pt-4"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
         </form>
 
         <div class="table-responsive">
             <table class="table table-bordered" id="reportTable">
-                <thead class="table-dark"><tr><th>Thông tin</th><th>HĐH</th><th>PM</th><th>Đề xuất</th><th>Thao tác</th></tr></thead>
+                <thead class="table-dark">
+                    <tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM Chuyên ngành</th><th>Cấu hình</th><th>Đề xuất</th><th>Thao tác</th></tr>
+                </thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -62,37 +63,52 @@
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
-    function checkPass() { if(document.getElementById('passInput').value === "123456") { document.getElementById('pass-overlay').style.display = 'none'; } else alert("Sai mật khẩu!"); }
-
+    // In báo cáo chuẩn NĐ 30/2020
     function printReport() {
         const win = window.open('', '_blank');
-        win.document.write(`<html><head><style>body{font-family:"Times New Roman";} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:5px; text-align:center;}</style></head><body>
-            <h3 style="text-align:center;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>BÁO CÁO THỐNG KÊ TÀI SẢN 2026</h3>
+        win.document.write(`<html><head><style>body{font-family:"Times New Roman",serif; padding:50px;} .header{text-align:center; font-weight:bold;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:8px; text-align:center;}</style></head><body>
+            <div class="header">ĐƠN VỊ: QUẢN TRỊ THIẾT BỊ<br>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc<br><br>BÁO CÁO THỐNG KÊ TÀI SẢN CNTT 2026</div><br>
             ${document.getElementById("reportTable").outerHTML.replace(/<th.*?Thao tác<\/th>/g, '').replace(/<td.*?>.*?<\/td>$/gm, '')}
         </body></html>`);
         setTimeout(() => { win.print(); }, 500);
     }
 
-    // Đảm bảo QR tạo xong mới hiển thị bằng setTimeout
+    // QR Code triệt để
     function showQR(id) {
         const modal = document.createElement('div');
         modal.id = "qr-modal";
-        modal.style.cssText = "position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; padding:20px; border:2px solid #000; z-index:99999;";
         modal.innerHTML = `<h5>Mã QR</h5><div id="qr-c"></div><button class="btn btn-sm btn-secondary mt-2" onclick="this.parentElement.remove()">Đóng</button>`;
         document.body.appendChild(modal);
-        
-        setTimeout(() => {
-            new QRCode(document.getElementById("qr-c"), {text: id, width:200, height:200, correctLevel: 3});
-        }, 100);
+        setTimeout(() => { new QRCode(document.getElementById("qr-c"), {text: id, width:200, height:200, correctLevel: 3}); }, 100);
     }
 
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
-        if(data) document.getElementById('tableBody').innerHTML = data.map(r => `<tr><td><b>${r.department}</b><br>${r.full_name}</td><td>${r.os}</td><td>${r.special_pm}</td><td>${r.proposal}</td><td><button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button></td></tr>`).join('');
+        if(data) document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
+            <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
+            <td>${r.quantity}</td><td>${r.os}</td><td>${r.office_version}</td><td>${r.special_pm}</td><td>${r.specs}</td><td>${r.proposal}</td>
+            <td><button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button></td>
+        </tr>`).join('');
     }
 
-    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); await _sb.from('survey_devices').insert([{ department: document.getElementById('dept').value, full_name: document.getElementById('user').value, os: document.getElementById('os').value, special_pm: document.getElementById('pm').value, proposal: document.getElementById('proposal').value }]); loadData(); };
-    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao.xlsx"); }
+    document.getElementById('dataForm').onsubmit = async (e) => { 
+        e.preventDefault(); 
+        await _sb.from('survey_devices').insert([{ 
+            department: document.getElementById('dept').value, 
+            full_name: document.getElementById('user').value, 
+            device_name: document.getElementById('device').value,
+            quantity: document.getElementById('qty').value,
+            os: document.getElementById('os').value, 
+            office_version: document.getElementById('office').value, 
+            special_pm: document.getElementById('pm').value,
+            specs: document.getElementById('specs').value,
+            proposal: document.getElementById('proposal').value 
+        }]); 
+        loadData(); 
+        document.getElementById('dataForm').reset();
+    };
+
+    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao_TaiSan_HanhChinh.xlsx"); }
     loadData();
 </script>
 </body>
