@@ -34,14 +34,14 @@
         <div class="col-md-1"><input type="number" id="qty" value="1" class="form-control" placeholder="SL"></div>
         <div class="col-md-2">
             <select id="os" class="form-select">
-                <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 7</option><option>Win XP</option><option>Server 2025/2022</option></optgroup>
-                <optgroup label="Khác"><option>macOS</option><option>Ubuntu</option></optgroup>
+                <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 7</option><option>Win XP</option><option>Server 2025/2022/2019/2016/2012</option></optgroup>
+                <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Ubuntu/Debian/CentOS</option></optgroup>
             </select>
         </div>
         <div class="col-md-1"><select id="os_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
         <div class="col-md-2">
             <select id="office" class="form-select">
-                <option>M365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2016</option><option>Office 2010</option>
+                <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2010</option>
             </select>
         </div>
         <div class="col-md-1"><select id="off_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
@@ -60,7 +60,7 @@
     </div>
 </div>
 
-<div id="qr-overlay"><h5>Mã QR Tài sản</h5><div id="qr-c"></div><button class="btn btn-secondary w-100 mt-2" onclick="document.getElementById('qr-overlay').style.display='none'">Đóng</button></div>
+<div id="qr-overlay"><h5>Mã QR</h5><div id="qr-c"></div><button class="btn btn-secondary w-100 mt-2" onclick="document.getElementById('qr-overlay').style.display='none'">Đóng</button></div>
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
@@ -75,10 +75,10 @@
     function renderTable() {
         const filter = document.getElementById('filterDept').value.toLowerCase();
         const filtered = dbData.filter(r => (r.department || '').toLowerCase().includes(filter));
-        filtered.sort((a,b) => (a.os_lic === 'Chưa có' ? -1 : 1));
+        filtered.sort((a,b) => ((a.os_lic || 'Chưa có') === 'Chưa có' ? -1 : 1));
         
         document.getElementById('tableBody').innerHTML = filtered.map(r => `
-            <tr class="${r.os_lic === 'Chưa có' ? 'bg-warning-light' : ''}">
+            <tr class="${(r.os_lic || '') === 'Chưa có' ? 'bg-warning-light' : ''}">
                 <td><b>${r.department || ''}</b><br>${r.user || ''}<br>${r.device || ''} (SL: ${r.quantity || 1})</td>
                 <td>${r.os || ''} (${r.os_lic || ''})</td>
                 <td>${r.office || ''} (${r.off_lic || ''})</td>
@@ -92,7 +92,6 @@
             </tr>`).join('');
     }
 
-    // Các hàm showQR, deleteRow, export... giữ nguyên logic ổn định đã sửa
     function showQR(id) {
         document.getElementById('qr-overlay').style.display = 'block';
         document.getElementById('qr-c').innerHTML = "";
@@ -100,8 +99,9 @@
     }
 
     function deleteRow(id) {
-        let pass = prompt("Nhập mật khẩu (Enter để xác nhận):");
+        let pass = prompt("Nhập mật khẩu (Enter để xóa):");
         if (pass === "123456") _sb.from('survey_devices').delete().eq('id', id).then(loadData);
+        else if (pass !== null) alert("Sai mật khẩu!");
     }
 
     document.getElementById('dataForm').onsubmit = async (e) => {
@@ -116,6 +116,20 @@
         }]);
         loadData();
     };
+
+    function exportWord() {
+        const html = `<html><meta charset="utf-8"><body>` + document.getElementById('reportTable').outerHTML + `</body></html>`;
+        const blob = new Blob([html], {type: 'application/msword'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'BaoCao_TaiSan.doc'; a.click();
+    }
+
+    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao.xlsx"); }
+    function printReport() { 
+        const win = window.open('', '_blank');
+        win.document.write('<html><body>' + document.getElementById('reportTable').outerHTML + '</body></html>');
+        win.print(); 
+    }
 
     loadData();
 </script>
