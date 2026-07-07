@@ -6,23 +6,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        #status-bar { position: fixed; top: 10px; right: 10px; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; z-index: 10000; }
-        .online { background: #d1e7dd; color: #0f5132; }
-        .offline { background: #f8d7da; color: #842029; }
         #qr-container { display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 3px solid #0d6efd; z-index: 9999; box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center; border-radius: 15px; }
-        #qrcode-preview { margin: 15px auto; width: 200px; height: 200px; }
-        @media print { .no-print { display: none; } #qr-container { position: static; border: none; } }
+        #qrcode-preview { margin: 15px auto; width: 150px; height: 150px; }
+        @media print { .no-print { display: none !important; } body { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2cm; } table { width: 100%; border-collapse: collapse; } table, th, td { border: 1px solid black; padding: 8px; } }
     </style>
 </head>
 <body class="bg-light p-4">
 
-    <div id="status-bar" class="offline">Đang kết nối...</div>
-
-    <div id="qr-container">
-        <h5 id="qr-title" class="text-primary fw-bold">TEM TÀI SẢN</h5>
+    <div id="qr-container" class="no-print">
+        <h5 class="text-primary fw-bold">MÃ QR TÀI SẢN</h5>
         <div id="qrcode-preview"></div>
-        <div class="no-print"><button class="btn btn-primary" onclick="window.print()">🖨️ In Tem</button> <button class="btn btn-secondary" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button></div>
+        <button class="btn btn-secondary mt-3" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button>
     </div>
 
     <div class="card p-4 shadow" style="max-width: 1500px; margin: auto;">
@@ -33,105 +29,91 @@
             <div class="col-md-2"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-2"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
             <div class="col-md-2"><label>Thiết bị</label><input type="text" id="device" class="form-control"></div>
-            <div class="col-md-1"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1" min="1"></div>
-            
-            <div class="col-md-2"><label>Hệ điều hành</label>
+            <div class="col-md-1"><label>Số lượng</label><input type="number" id="qty" value="1" class="form-control"></div>
+            <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows Desktop"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 8</option><option>Windows 7</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option></optgroup>
-                    <optgroup label="Windows Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2016</option><option>Server 2012 R2</option><option>Server 2008 R2</option><option>Server 2003</option></optgroup>
-                    <optgroup label="Khác"><option>macOS</option><option>Linux (Ubuntu/CentOS)</option></optgroup>
+                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 7</option><option>Windows XP</option><option>Windows 98/95</option></optgroup>
+                    <optgroup label="Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2008 R2</option></optgroup>
+                    <optgroup label="Khác"><option>macOS</option><option>Linux</option></optgroup>
                 </select>
             </div>
-            <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
-            
+            <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
             <div class="col-md-2"><label>Office</label>
                 <select id="office" class="form-select">
-                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option><option>Office XP/2000/97</option>
+                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2016</option><option>Office 2010</option><option>Office 2003</option><option>Office 97</option>
                 </select>
             </div>
-            <div class="col-md-1"><label>BQ Off</label><select id="office_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
-            
-            <div class="col-md-2"><label>PM Chuyên ngành</label>
-                <input class="form-control" list="pmList" id="pm">
-                <datalist id="pmList">
-                    <option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="ASIA Standard">
-                    <option value="Quasoft ERP"><option value="Quasoft CRM"><option value="Quasoft HRM">
-                    <option value="MISA SME.NET 2024"><option value="MISA AMIS"><option value="MISA Mimosa">
-                    <option value="FAST Accounting 11"><option value="FAST Business Online">
-                    <option value="BRAVO 8R3"><option value="SAP Business One"><option value="Không có">
-                </datalist>
+            <div class="col-md-1"><label>BQ Office</label><select id="office_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
+            <div class="col-md-2"><label>PM Chuyên ngành</label><input class="form-control" list="pmList" id="pm">
+                <datalist id="pmList"><option value="ASIA Enterprise 2025"><option value="Quasoft ERP"><option value="MISA SME.NET 2024"><option value="FAST Accounting 11"><option value="SAP Business One"></datalist>
             </div>
-            <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Chưa có</option><option>Có</option></select></div>
-            
-            <div class="col-md-6"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
-            <div class="col-md-6"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
-            
+            <div class="col-md-1"><label>BQ PM</label><select id="pm_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
+            <div class="col-md-5"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-5"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
+            <div class="col-md-2 text-end pt-4">
+                <button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button>
+            </div>
             <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary px-4">Lưu Dữ Liệu</button>
-                <button type="button" class="btn btn-success" onclick="exportData()">Xuất File CSV</button>
+                <button type="button" class="btn btn-warning" onclick="window.print()">🖨️ In Báo Cáo</button>
+                <button type="button" class="btn btn-success" onclick="exportFile('xlsx')">📊 Xuất Excel</button>
+                <button type="button" class="btn btn-info" onclick="exportFile('doc')">📄 Xuất Word</button>
             </div>
         </form>
 
         <div class="row g-2 mb-3">
-            <div class="col-md-3"><select id="deptFilter" class="form-select" onchange="applyFilters()"><option value="">Tất cả bộ phận</option></select></div>
+            <div class="col-md-3"><select id="deptFilter" class="form-select" onchange="applyFilters()"><option value="">Lọc theo Bộ phận</option></select></div>
             <div class="col-md-9"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm thông minh..." onkeyup="applyFilters()"></div>
         </div>
 
         <table class="table table-bordered table-hover" id="reportTable">
-            <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH/Off/PM</th><th>Cấu hình & Đề xuất</th><th>Thao tác</th></tr></thead>
+            <thead class="table-dark">
+                <tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM Chuyên ngành</th><th>Cấu hình & Đề xuất</th><th>Thao tác</th></tr>
+            </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    const PASS = "123456";
 
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
-        if(data) { window.appData = data; updateDeptFilter(data); renderTable(data); document.getElementById('status-bar').innerText = "● Trực tuyến"; document.getElementById('status-bar').className = "online"; }
-    }
-
-    function updateDeptFilter(data) {
-        const depts = [...new Set(data.map(r => r.department))];
-        const select = document.getElementById('deptFilter');
-        select.innerHTML = '<option value="">Tất cả bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
-    }
-
-    function applyFilters() {
-        const dept = document.getElementById('deptFilter').value;
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        renderTable(window.appData.filter(r => (dept === "" || r.department === dept) && (r.department.toLowerCase().includes(search) || r.full_name.toLowerCase().includes(search) || r.device_name.toLowerCase().includes(search) || r.os.toLowerCase().includes(search))));
+        if(data) { window.fullData = data; updateFilters(data); renderTable(data); }
     }
 
     function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.map(r => `
-            <tr>
-                <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
-                <td>${r.quantity}</td>
-                <td>HĐH: ${r.os} (${r.os_license})<br>Off: ${r.office_version} (${r.office_license})<br>PM: ${r.special_pm} (${r.pm_license})</td>
-                <td>${r.specs}<br><i>Đề xuất: ${r.proposal}</i></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="showQR('${r.id}', '${r.device_name}')">QR</button>
-                    <button class="btn btn-sm btn-info" onclick="editRow(${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
-                </td>
-            </tr>`).join('');
+        document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
+            <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
+            <td>${r.quantity}</td>
+            <td>${r.os}<br>(${r.os_license})</td>
+            <td>${r.office_version}<br>(${r.office_license})</td>
+            <td>${r.special_pm}<br>(${r.pm_license})</td>
+            <td>${r.specs}<br><i>${r.proposal}</i></td>
+            <td>
+                <button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button>
+                <button class="btn btn-sm btn-info" onclick="secureAction('edit', ${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
+                <button class="btn btn-sm btn-danger" onclick="secureAction('delete', '${r.id}')">Xóa</button>
+            </td>
+        </tr>`).join('');
     }
 
-    document.getElementById('dataForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, os_license: document.getElementById('os_license').value, office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value, special_pm: document.getElementById('pm').value, pm_license: document.getElementById('pm_license').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value };
-        const id = document.getElementById('editId').value;
-        if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]);
-        loadData(); document.getElementById('dataForm').reset(); document.getElementById('editId').value = '';
-    };
+    function exportFile(type) {
+        const table = document.getElementById("reportTable");
+        const wb = XLSX.utils.table_to_book(table, {sheet:"BaoCao"});
+        if(type === 'xlsx') XLSX.writeFile(wb, "BaoCaoTaiSan.xlsx");
+        else { const blob = new Blob([table.outerHTML], {type: "application/msword"}); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "BaoCaoTaiSan.doc"; a.click(); }
+    }
 
-    function showQR(id, title) { document.getElementById("qr-title").innerText = "Tài sản: " + title; const container = document.getElementById("qrcode-preview"); container.innerHTML = ""; new QRCode(container, { text: "ID:" + id, width: 200, height: 200 }); document.getElementById("qr-container").style.display = "block"; }
-    function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity; document.getElementById('os').value=r.os; document.getElementById('os_license').value=r.os_license; document.getElementById('office').value=r.office_version; document.getElementById('office_license').value=r.office_license; document.getElementById('pm').value=r.special_pm; document.getElementById('pm_license').value=r.pm_license; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; window.scrollTo(0,0); }
-    async function deleteRow(id) { if(confirm("Xóa tài sản này?")) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); } }
-    function exportData() { let csv = []; document.querySelectorAll("#reportTable tr").forEach(row => { let rowData = []; row.querySelectorAll("th, td").forEach((col, idx) => { if(idx < 4) rowData.push('"' + col.innerText.replace(/"/g, '""').replace(/\n/g, ' - ') + '"'); }); csv.push(rowData.join(",")); }); const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Tai_San_2026.csv"; link.click(); }
+    function showQR(id) { document.getElementById("qrcode-preview").innerHTML = ""; new QRCode(document.getElementById("qrcode-preview"), {text: "ID:" + id, width: 150, height: 150}); document.getElementById("qr-container").style.display = "block"; }
+    function secureAction(type, data) { const p = prompt("Nhập mật khẩu (123456):"); if (p === PASS) { if (type === 'delete') deleteRow(data); else editRow(data); } else if (p !== null) alert("Sai mật khẩu!"); }
+    function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity; document.getElementById('os').value=r.os; document.getElementById('os_license').value=r.os_license; document.getElementById('office').value=r.office_version; document.getElementById('office_license').value=r.office_license; document.getElementById('pm').value=r.special_pm; document.getElementById('pm_license').value=r.pm_license; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; }
+    async function deleteRow(id) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); }
+    function applyFilters() { const dF = document.getElementById('deptFilter').value; const sI = document.getElementById('searchInput').value.toLowerCase(); renderTable(window.fullData.filter(r => (dF === "" || r.department === dF) && (r.full_name.toLowerCase().includes(sI) || r.device_name.toLowerCase().includes(sI)))); }
+    function updateFilters(data) { const depts = [...new Set(data.map(r => r.department))]; document.getElementById('deptFilter').innerHTML = '<option value="">Tất cả Bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join(''); }
     
-    loadData(); setInterval(loadData, 30000);
+    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, os_license: document.getElementById('os_license').value, office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value, special_pm: document.getElementById('pm').value, pm_license: document.getElementById('pm_license').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value }; const id = document.getElementById('editId').value; if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]); loadData(); document.getElementById('dataForm').reset(); };
+    loadData();
 </script>
 </body>
 </html>
