@@ -63,8 +63,9 @@
             </div>
         </form>
 
-        <div class="mb-3">
-            <input type="text" id="filterInput" class="form-control border-primary" placeholder="🔍 Tìm kiếm thông minh (Nhập bộ phận, tên, thiết bị, HĐH, Office...)" onkeyup="filterTable()">
+        <div class="row g-2 mb-3">
+            <div class="col-md-3"><select id="deptFilter" class="form-select" onchange="applyFilters()"><option value="">Tất cả bộ phận</option></select></div>
+            <div class="col-md-9"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm thông minh (Người dùng, Thiết bị, HĐH...)" onkeyup="applyFilters()"></div>
         </div>
 
         <table class="table table-bordered table-hover" id="reportTable">
@@ -79,10 +80,27 @@
     async function loadData() {
         const { data } = await _sb.from('survey_devices').select('*').order('id', {ascending: false});
         if(data) {
-            window.appData = data; // Lưu vào biến toàn cục để lọc
+            window.appData = data;
+            updateDeptFilter(data);
             renderTable(data);
             document.getElementById('status-bar').innerText = "● Trực tuyến"; document.getElementById('status-bar').className = "online";
         }
+    }
+
+    function updateDeptFilter(data) {
+        const depts = [...new Set(data.map(r => r.department))];
+        const select = document.getElementById('deptFilter');
+        select.innerHTML = '<option value="">Tất cả bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+    }
+
+    function applyFilters() {
+        const dept = document.getElementById('deptFilter').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = window.appData.filter(r => 
+            (dept === "" || r.department === dept) &&
+            (r.department.toLowerCase().includes(search) || r.full_name.toLowerCase().includes(search) || r.device_name.toLowerCase().includes(search) || r.os.toLowerCase().includes(search))
+        );
+        renderTable(filtered);
     }
 
     function renderTable(data) {
@@ -98,16 +116,6 @@
                     <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
                 </td>
             </tr>`).join('');
-    }
-
-    function filterTable() {
-        const term = document.getElementById('filterInput').value.toLowerCase();
-        const filtered = window.appData.filter(r => 
-            r.department.toLowerCase().includes(term) || r.full_name.toLowerCase().includes(term) || 
-            r.device_name.toLowerCase().includes(term) || r.os.toLowerCase().includes(term) || 
-            r.office_version.toLowerCase().includes(term)
-        );
-        renderTable(filtered);
     }
 
     document.getElementById('dataForm').onsubmit = async (e) => {
