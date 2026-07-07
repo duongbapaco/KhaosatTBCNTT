@@ -29,18 +29,18 @@
             <div class="col-md-2"><label>Bộ phận</label><input type="text" id="dept" class="form-control" required></div>
             <div class="col-md-2"><label>Người dùng</label><input type="text" id="user" class="form-control" required></div>
             <div class="col-md-2"><label>Thiết bị</label><input type="text" id="device" class="form-control"></div>
-            <div class="col-md-1"><label>Số lượng</label><input type="number" id="qty" value="1" class="form-control"></div>
+            <div class="col-md-1"><label>SL</label><input type="number" id="qty" value="1" class="form-control"></div>
             <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 7</option><option>Windows XP</option><option>Windows 98/95</option></optgroup>
-                    <optgroup label="Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2008 R2</option></optgroup>
+                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>Windows 98/95</option></optgroup>
+                    <optgroup label="Server"><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option><option>Server 2012</option></optgroup>
                     <optgroup label="Khác"><option>macOS</option><option>Linux</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ HĐH</label><select id="os_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
             <div class="col-md-2"><label>Office</label>
                 <select id="office" class="form-select">
-                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2016</option><option>Office 2010</option><option>Office 2003</option><option>Office 97</option>
+                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option><option>Office XP</option><option>Office 2000</option><option>Office 97</option>
                 </select>
             </div>
             <div class="col-md-1"><label>BQ Office</label><select id="office_license" class="form-select"><option>Chưa</option><option>Có</option></select></div>
@@ -62,7 +62,7 @@
 
         <div class="row g-2 mb-3">
             <div class="col-md-3"><select id="deptFilter" class="form-select" onchange="applyFilters()"><option value="">Lọc theo Bộ phận</option></select></div>
-            <div class="col-md-9"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm thông minh..." onkeyup="applyFilters()"></div>
+            <div class="col-md-9"><input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm..." onkeyup="applyFilters()"></div>
         </div>
 
         <table class="table table-bordered table-hover" id="reportTable">
@@ -100,9 +100,14 @@
 
     function exportFile(type) {
         const table = document.getElementById("reportTable");
-        const wb = XLSX.utils.table_to_book(table, {sheet:"BaoCao"});
-        if(type === 'xlsx') XLSX.writeFile(wb, "BaoCaoTaiSan.xlsx");
-        else { const blob = new Blob([table.outerHTML], {type: "application/msword"}); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "BaoCaoTaiSan.doc"; a.click(); }
+        if(type === 'xlsx') {
+            const wb = XLSX.utils.table_to_book(table, {sheet:"BaoCao"});
+            XLSX.writeFile(wb, "BaoCaoTaiSan.xlsx");
+        } else {
+            const blob = new Blob([table.outerHTML], {type: "application/msword"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "BaoCaoTaiSan.doc"; a.click();
+        }
     }
 
     function showQR(id) { document.getElementById("qrcode-preview").innerHTML = ""; new QRCode(document.getElementById("qrcode-preview"), {text: "ID:" + id, width: 150, height: 150}); document.getElementById("qr-container").style.display = "block"; }
@@ -112,7 +117,7 @@
     function applyFilters() { const dF = document.getElementById('deptFilter').value; const sI = document.getElementById('searchInput').value.toLowerCase(); renderTable(window.fullData.filter(r => (dF === "" || r.department === dF) && (r.full_name.toLowerCase().includes(sI) || r.device_name.toLowerCase().includes(sI)))); }
     function updateFilters(data) { const depts = [...new Set(data.map(r => r.department))]; document.getElementById('deptFilter').innerHTML = '<option value="">Tất cả Bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join(''); }
     
-    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, os_license: document.getElementById('os_license').value, office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value, special_pm: document.getElementById('pm').value, pm_license: document.getElementById('pm_license').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value }; const id = document.getElementById('editId').value; if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]); loadData(); document.getElementById('dataForm').reset(); };
+    document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, os_license: document.getElementById('os_license').value, office_version: document.getElementById('office').value, office_license: document.getElementById('office_license').value, special_pm: document.getElementById('pm').value, pm_license: document.getElementById('pm_license').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value }; const id = document.getElementById('editId').value; if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]); loadData(); document.getElementById('dataForm').reset(); document.getElementById('editId').value = ''; };
     loadData();
 </script>
 </body>
