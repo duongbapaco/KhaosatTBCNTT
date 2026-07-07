@@ -8,36 +8,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* Định dạng bảo mật */
-        #pass-container { display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 2px solid #0d6efd; z-index: 9999; box-shadow: 0 0 15px rgba(0,0,0,0.3); border-radius: 8px; }
-        
-        /* Định dạng chuẩn văn bản hành chính khi in */
-        @media print {
-            body { font-family: "Times New Roman", serif; font-size: 13pt; margin: 2cm 2cm 2cm 3cm; }
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #000 !important; padding: 8px; text-align: center; }
-            h2 { text-align: center; text-transform: uppercase; }
-            .header-info { text-align: center; margin-bottom: 30px; }
-        }
+        #qr-container, #pass-container { display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; padding: 25px; border: 2px solid #0d6efd; z-index: 9999; box-shadow: 0 0 15px rgba(0,0,0,0.3); border-radius: 8px; }
+        @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
         .print-only { display: none; }
     </style>
 </head>
 <body class="bg-light p-4">
 
+    <div id="qr-container" class="no-print">
+        <h5 class="text-primary fw-bold">MÃ QR TÀI SẢN</h5>
+        <div id="qrcode-preview" style="width: 150px; height: 150px; margin: 15px auto;"></div>
+        <button class="btn btn-secondary" onclick="document.getElementById('qr-container').style.display='none'">Đóng</button>
+    </div>
+
     <div id="pass-container" class="no-print">
         <h5 class="text-danger">Xác thực mật khẩu</h5>
         <input type="password" id="passInput" class="form-control mb-2" placeholder="Nhập mật khẩu...">
         <button class="btn btn-primary w-100" onclick="checkPass()">Xác nhận</button>
-    </div>
-
-    <div class="print-only">
-        <div class="header-info">
-            <p>ĐƠN VỊ: QUẢN TRỊ HỆ THỐNG<br>Số: ..../BC-QTTB</p>
-            <p><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</b></p>
-        </div>
-        <h2>BÁO CÁO THỐNG KÊ TÀI SẢN CNTT NĂM 2026</h2>
     </div>
 
     <div class="card p-4 shadow" style="max-width: 1400px; margin: auto;">
@@ -51,26 +38,25 @@
             <div class="col-md-1"><label>SL</label><input type="number" id="qty" value="1" class="form-control"></div>
             <div class="col-md-2"><label>HĐH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>Server 2025</option><option>Server 2022</option><option>Server 2019</option></optgroup>
-                    <optgroup label="Khác"><option>macOS Sequoia</option><option>macOS Sonoma</option><option>Ubuntu Linux</option></optgroup>
+                    <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>Server 2025/2022/2019</option><option>macOS</option><option>Linux</option>
                 </select>
             </div>
             <div class="col-md-2"><label>Office</label>
                 <select id="office" class="form-select">
-                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option>
+                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016/2013/2010</option>
                 </select>
             </div>
-            <div class="col-md-3"><label>PM Chuyên ngành (Chọn/Nhập)</label>
-                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc tự nhập">
-                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise 2025"><option value="MISA SME.NET 2024"><option value="FAST Accounting 11"><option value="BRAVO 8R3"><option value="SAP Business One"></datalist>
+            <div class="col-md-3"><label>PM Chuyên ngành</label>
+                <input class="form-control" list="pmList" id="pm" placeholder="Chọn hoặc nhập">
+                <datalist id="pmList"><option value="Không có"><option value="ASIA Enterprise"><option value="MISA SME.NET"><option value="FAST Accounting"><option value="BRAVO"><option value="SAP"></datalist>
             </div>
-            <div class="col-md-4"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
-            <div class="col-md-4"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
+            <div class="col-md-5"><label>Cấu hình</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-5"><label>Đề xuất</label><input type="text" id="proposal" class="form-control"></div>
             <div class="col-md-2 text-end pt-4"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
         </form>
 
         <table class="table table-bordered" id="reportTable">
-            <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM Chuyên ngành</th><th>Cấu hình</th><th>Đề xuất</th><th class="no-print">Thao tác</th></tr></thead>
+            <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM</th><th>Cấu hình</th><th>Đề xuất</th><th class="no-print">Thao tác</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
 
@@ -101,6 +87,7 @@
                 <td><b>${r.department}</b><br>${r.full_name}<br>${r.device_name}</td>
                 <td>${r.quantity}</td><td>${r.os}</td><td>${r.office_version}</td><td>${r.special_pm}</td><td>${r.specs}</td><td>${r.proposal || ''}</td>
                 <td class="no-print">
+                    <button class="btn btn-sm btn-secondary" onclick="showQR('${r.id}')">QR</button>
                     <button class="btn btn-sm btn-info" onclick="secureAction('edit', ${JSON.stringify(r).replace(/"/g, '&quot;')})">Sửa</button>
                     <button class="btn btn-sm btn-danger" onclick="secureAction('delete', '${r.id}')">Xóa</button>
                 </td>
@@ -108,10 +95,11 @@
         }
     }
 
+    function showQR(id) { document.getElementById("qrcode-preview").innerHTML = ""; new QRCode(document.getElementById("qrcode-preview"), id); document.getElementById("qr-container").style.display = "block"; }
     document.getElementById('dataForm').onsubmit = async (e) => { e.preventDefault(); const p = { department: document.getElementById('dept').value, full_name: document.getElementById('user').value, device_name: document.getElementById('device').value, quantity: document.getElementById('qty').value, os: document.getElementById('os').value, office_version: document.getElementById('office').value, special_pm: document.getElementById('pm').value, specs: document.getElementById('specs').value, proposal: document.getElementById('proposal').value }; const id = document.getElementById('editId').value; if(id) await _sb.from('survey_devices').update(p).eq('id', id); else await _sb.from('survey_devices').insert([p]); loadData(); document.getElementById('dataForm').reset(); };
     function editRow(r) { document.getElementById('editId').value=r.id; document.getElementById('dept').value=r.department; document.getElementById('user').value=r.full_name; document.getElementById('device').value=r.device_name; document.getElementById('qty').value=r.quantity; document.getElementById('os').value=r.os; document.getElementById('office').value=r.office_version; document.getElementById('pm').value=r.special_pm; document.getElementById('specs').value=r.specs; document.getElementById('proposal').value=r.proposal; window.scrollTo(0,0); }
     async function deleteRow(id) { await _sb.from('survey_devices').delete().eq('id', id); loadData(); }
-    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao_TaiSan_HanhChinh.xlsx"); }
+    function exportFile() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "BaoCao_TaiSan.xlsx"); }
     loadData();
 </script>
 </body>
