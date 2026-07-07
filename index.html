@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>QUẢN TRỊ TÀI SẢN CNTT 2026 - TOÀN DIỆN</title>
+    <title>QUẢN TRỊ TÀI SẢN CNTT 2026 - FULL OS DATA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,7 +12,7 @@
         @media print { .no-print { display: none !important; } }
         .status-bar { padding: 5px 20px; font-size: 0.8rem; font-weight: bold; }
         .table-striped tbody tr:nth-of-type(odd) { background-color: #f2f2f2; }
-        th { background-color: #333 !important; color: white !important; text-align: center; border: 1px solid #000 !important; }
+        th { background: #333 !important; color: white !important; text-align: center; border: 1px solid #000 !important; }
         td { border: 1px solid #000 !important; vertical-align: middle; padding: 8px; }
         .form-section { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
         label { font-weight: bold; margin-bottom: 5px; display: block; font-size: 0.85rem; }
@@ -20,7 +20,7 @@
 </head>
 <body class="bg-light">
 
-<div id="statusBar" class="status-bar text-white bg-secondary no-print">Đang kiểm tra kết nối Supabase...</div>
+<div id="statusBar" class="status-bar text-white bg-secondary no-print">Đang kết nối...</div>
 
 <div class="container-fluid p-4">
     <h3 class="text-center fw-bold mb-4 no-print">HỆ THỐNG QUẢN TRỊ TÀI SẢN CNTT 2026</h3>
@@ -31,35 +31,39 @@
             <div class="col-md-2"><label>Người dùng</label><input type="text" id="usr" class="form-control" required></div>
             <div class="col-md-2"><label>Thiết bị</label><input type="text" id="dev" class="form-control"></div>
             <div class="col-md-1"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1"></div>
-            <div class="col-md-2"><label>Hệ điều hành</label><select id="os" class="form-select"><optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 7</option></optgroup></select></div>
-            <div class="col-md-3"><label>Tình trạng Bản quyền HĐH</label><select id="osL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
             
-            <div class="col-md-3"><label>Phần mềm Office</label><select id="off" class="form-select"><option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option></select></div>
-            <div class="col-md-3"><label>Tình trạng Bản quyền Office</label><select id="offL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
-            <div class="col-md-3"><label>PM Chuyên ngành</label><input type="text" id="pm" class="form-control" list="pmList"><datalist id="pmList"><option value="ASIA"><option value="Quasoft"><option value="MISA"></datalist></div>
-            <div class="col-md-3"><label>Tình trạng Bản quyền PM</label><select id="pmL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-2"><label>HĐH</label>
+                <select id="os" class="form-select">
+                    <optgroup label="Windows">
+                        <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 8</option>
+                        <option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option>
+                        <option>Windows Me</option><option>Windows 98</option><option>Windows 95</option>
+                    </optgroup>
+                    <optgroup label="macOS">
+                        <option>macOS Sequoia</option><option>macOS Sonoma</option><option>macOS Ventura</option><option>macOS Monterey</option>
+                        <option>macOS Big Sur</option><option>macOS Catalina</option><option>OS X El Capitan</option>
+                    </optgroup>
+                    <optgroup label="Khác"><option>Linux Ubuntu</option><option>Linux Debian</option><option>Fedora</option><option>ChromeOS</option></optgroup>
+                </select></div>
             
-            <div class="col-md-4"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-3"><label>BQ HĐH</label><select id="osL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-3"><label>Office</label>
+                <select id="off" class="form-select"><option>Microsoft 365</option><option>Office 2024</option><option>2021</option><option>2019</option><option>2016</option><option>2013</option><option>2010</option><option>2007</option><option>2003</option></select></div>
+            <div class="col-md-3"><label>BQ Office</label><select id="offL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-3"><label>PM Chuyên ngành</label><input type="text" id="pm" class="form-control" list="pmList"><datalist id="pmList"><option value="Không có"><option value="ASIA"><option value="Quasoft"><option value="MISA"></datalist></div>
+            <div class="col-md-3"><label>BQ PM</label><select id="pmL" class="form-select"><option>Chưa có</option><option>Đã có bản quyền</option></select></div>
+            
+            <div class="col-md-6"><label>Cấu hình chi tiết</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-md-4"><label>Đề xuất</label><input type="text" id="prop" class="form-control"></div>
-            <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-dark w-100">Lưu dữ liệu</button></div>
+            <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-dark w-100">Lưu dữ liệu</button></div>
         </form>
     </div>
 
-    <div class="row mb-3 g-2 no-print">
-        <div class="col-md-3">
-            <select id="filterDept" class="form-select" onchange="loadData()">
-                <option value="">-- Lọc theo Bộ phận (Tất cả) --</option>
-            </select>
-        </div>
-        <div class="col-md-9 text-end">
-            <button class="btn btn-success" onclick="exportExcel()">📊 Xuất Excel</button>
-            <button class="btn btn-secondary" onclick="window.print()">🖨️ In Báo Cáo</button>
-        </div>
-    </div>
-
+    <div class="mb-3 no-print"><select id="filterDept" class="form-select" onchange="loadData()"><option value="">-- Lọc theo Bộ phận --</option></select></div>
+    
     <table class="table table-striped table-hover" id="mainTable">
         <thead>
-            <tr><th>Bộ phận</th><th>Người dùng</th><th>Thiết bị</th><th>SL</th><th>HĐH</th><th>Bản quyền HĐH</th><th>Office</th><th>Bản quyền Office</th><th>PM Chuyên ngành</th><th>Bản quyền PM</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th class="no-print">Sửa/Xóa</th></tr>
+            <tr><th>Bộ phận</th><th>Người dùng</th><th>Thiết bị</th><th>SL</th><th>HĐH</th><th>BQ HĐH</th><th>Office</th><th>BQ Office</th><th>PM Chuyên ngành</th><th>BQ PM</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th class="no-print">Xử lý</th></tr>
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
@@ -67,28 +71,12 @@
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
-    const statusDiv = document.getElementById('statusBar');
-
-    async function checkConnection() {
-        try {
-            const { error } = await _sb.from('asset_management').select('id').limit(1);
-            if (error) throw error;
-            statusDiv.className = 'status-bar text-white bg-success';
-            statusDiv.innerText = '● Đã kết nối với Supabase Online';
-        } catch (e) {
-            statusDiv.className = 'status-bar text-white bg-danger';
-            statusDiv.innerText = '● Lỗi kết nối Supabase: ' + e.message;
-        }
-    }
-
+    
     async function loadData() {
         const { data } = await _sb.from('asset_management').select('*');
         const fDept = document.getElementById('filterDept').value;
-        const depts = [...new Set(data.map(r => r.department))];
-        const fSelect = document.getElementById('filterDept');
-        depts.forEach(d => { if(!fSelect.querySelector(`option[value="${d}"]`)) fSelect.innerHTML += `<option value="${d}">${d}</option>`; });
-
         const filtered = fDept ? data.filter(r => r.department === fDept) : data;
+        
         document.getElementById('tableBody').innerHTML = (filtered || []).map(r => `
             <tr>
                 <td>${r.department}</td><td>${r.user_name}</td><td>${r.device_name}</td><td>${r.quantity}</td>
@@ -97,15 +85,25 @@
                 <td>${r.specialized_pm}</td><td>${r.pm_license}</td>
                 <td>${r.specs}</td><td>${r.proposal}</td>
                 <td><div id="qr-${r.id}"></div></td>
-                <td class="no-print"><button class="btn btn-sm btn-warning">Sửa</button> <button class="btn btn-sm btn-danger" onclick="del(${r.id})">Xóa</button></td>
+                <td class="no-print"><button class="btn btn-sm btn-danger" onclick="del(${r.id})">Xóa</button></td>
             </tr>`).join('');
         filtered.forEach(r => new QRCode(document.getElementById(`qr-${r.id}`), {text: String(r.id), width: 40, height: 40}));
     }
 
-    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('mainTable')), "BaoCao_TaiSan_2026.xlsx"); }
-    function del(id) { if(prompt("Nhập mật khẩu:")==="ADMIN2026") _sb.from('asset_management').delete().eq('id', id).then(loadData); }
-    
-    checkConnection();
+    document.getElementById('masterForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await _sb.from('asset_management').insert([{
+            department: document.getElementById('dpt').value, user_name: document.getElementById('usr').value,
+            device_name: document.getElementById('dev').value, quantity: document.getElementById('qty').value,
+            os_version: document.getElementById('os').value, os_license: document.getElementById('osL').value,
+            office_version: document.getElementById('off').value, office_license: document.getElementById('offL').value,
+            specialized_pm: document.getElementById('pm').value, pm_license: document.getElementById('pmL').value,
+            specs: document.getElementById('specs').value, proposal: document.getElementById('prop').value
+        }]);
+        loadData();
+    };
+
+    function del(id) { if(prompt("Mật khẩu:")==="ADMIN2026") _sb.from('asset_management').delete().eq('id', id).then(loadData); }
     loadData();
 </script>
 </body>
