@@ -2,14 +2,15 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống Quản trị Tài sản 2026 Pro</title>
+    <title>Hệ thống Quản trị Tài sản 2026 Pro Full</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .table thead { background: #343a40; color: white; }
-        .bg-warning-light { background-color: #fff3cd; } /* Màu cảnh báo bản quyền */
+        .bg-warning-light { background-color: #fff3cd !important; }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body class="bg-light p-3">
@@ -17,8 +18,8 @@
 <div class="container-fluid">
     <h3 class="text-primary fw-bold">QUẢN TRỊ TÀI SẢN CNTT 2026</h3>
     
-    <div class="row g-2 mb-3">
-        <div class="col-md-3"><input type="text" id="filterDept" class="form-control" placeholder="Lọc theo bộ phận..."></div>
+    <div class="row g-2 mb-3 no-print">
+        <div class="col-md-3"><input type="text" id="filterDept" class="form-control" placeholder="Lọc theo bộ phận..." oninput="loadData()"></div>
         <div class="col-md-9 text-end">
             <button class="btn btn-warning" onclick="printReport()">🖨️ In Báo Cáo</button>
             <button class="btn btn-success" onclick="exportFile()">📊 Xuất Excel</button>
@@ -26,13 +27,15 @@
         </div>
     </div>
 
-    <form id="dataForm" class="row g-2 bg-white p-3 border rounded mb-4">
+    <form id="dataForm" class="row g-2 bg-white p-3 border rounded mb-4 no-print">
         <div class="col-md-2"><input type="text" id="dept" class="form-control" placeholder="Bộ phận" required></div>
         <div class="col-md-2"><input type="text" id="user" class="form-control" placeholder="Người dùng" required></div>
+        <div class="col-md-2"><input type="text" id="device" class="form-control" placeholder="Tên thiết bị"></div>
+        <div class="col-md-1"><input type="number" id="qty" value="1" class="form-control" placeholder="SL"></div>
         <div class="col-md-2">
             <select id="os" class="form-select">
-                <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Win XP</option><option>Server 2025/2022/2019/2016</option></optgroup>
-                <optgroup label="Khác"><option>macOS Sequoia/Sonoma</option><option>Ubuntu/Debian/CentOS</option></optgroup>
+                <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Win Vista</option><option>Win XP</option><option>Server 2025/2022/2019/2016/2012</option></optgroup>
+                <optgroup label="Khác"><option>macOS Sequoia</option><option>macOS Sonoma</option><option>Ubuntu Linux</option><option>Debian</option><option>CentOS</option></optgroup>
             </select>
         </div>
         <div class="col-md-1"><select id="os_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
@@ -42,59 +45,86 @@
             </select>
         </div>
         <div class="col-md-1"><select id="off_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
-        <div class="col-md-2"><input type="text" id="pm" class="form-control" placeholder="PM khác"></div>
+        <div class="col-md-2"><input type="text" id="pm" class="form-control" list="pmList" placeholder="PM khác">
+            <datalist id="pmList"><option value="ASIA Enterprise"><option value="MISA SME.NET"><option value="FAST Accounting"><option value="BRAVO"><option value="SAP"></datalist>
+        </div>
         <div class="col-md-1"><select id="pm_lic" class="form-select"><option value="Chưa có">Chưa có</option><option value="Đã có">Đã có</option></select></div>
         <div class="col-md-12"><button type="submit" class="btn btn-primary w-100">LƯU DỮ LIỆU</button></div>
     </form>
 
     <div class="table-responsive">
         <table class="table table-bordered" id="reportTable">
-            <thead><tr><th>Thông tin</th><th>HĐH (Bản quyền)</th><th>Office (Bản quyền)</th><th>PM Khác (Bản quyền)</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>Thông tin</th><th>HĐH</th><th>Office</th><th>PM Khác</th><th>Thao tác</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const _sb = supabase.createClient('URL', 'KEY');
-    
-    // Xử lý phím Enter cho mật khẩu
-    function secureAction(callback) {
-        let pass = prompt("Nhập mật khẩu quản trị:");
-        if (pass === "123456") callback();
-        else alert("Sai mật khẩu!");
-    }
+    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
 
     async function loadData() {
+        const filter = document.getElementById('filterDept').value.toLowerCase();
         const { data } = await _sb.from('survey_devices').select('*');
-        // Sắp xếp: Ưu tiên "Chưa có" bản quyền lên đầu
-        data.sort((a,b) => (a.os_lic === 'Chưa có' ? -1 : 1));
+        const filtered = data.filter(r => r.department.toLowerCase().includes(filter));
+        // Ưu tiên "Chưa có" bản quyền lên đầu
+        filtered.sort((a,b) => (a.os_lic === 'Chưa có' ? -1 : 1));
         
-        document.getElementById('tableBody').innerHTML = data.map(r => `
+        document.getElementById('tableBody').innerHTML = filtered.map(r => `
             <tr class="${r.os_lic === 'Chưa có' ? 'bg-warning-light' : ''}">
-                <td>${r.department} - ${r.user}</td>
+                <td><b>${r.department}</b><br>${r.user}<br>${r.device}</td>
                 <td>${r.os} (${r.os_lic})</td>
                 <td>${r.office} (${r.off_lic})</td>
                 <td>${r.pm} (${r.pm_lic})</td>
                 <td>
                     <button class="btn btn-sm btn-dark" onclick="showQR('${r.id}')">QR</button>
-                    <button class="btn btn-sm btn-danger" onclick="secureAction(() => deleteRow('${r.id}'))">Xóa</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">Xóa</button>
                 </td>
             </tr>`).join('');
     }
 
-    function exportWord() {
-        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export Word</title></head><body>";
-        const footer = "</body></html>";
-        const sourceHTML = header + document.getElementById("reportTable").outerHTML + footer;
-        const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
-        const fileDownload = document.createElement("a");
-        fileDownload.href = source;
-        fileDownload.download = 'BaoCao_TaiSan.doc';
-        fileDownload.click();
+    function deleteRow(id) {
+        let pass = prompt("Nhập mật khẩu quản trị:");
+        if (pass === "123456") { _sb.from('survey_devices').delete().eq('id', id).then(loadData); }
+        else if (pass) alert("Sai mật khẩu!");
     }
-    
-    // Các hàm khác (print, QR...) giữ nguyên logic của phiên bản ổn định trước
+
+    function showQR(id) {
+        const modal = document.createElement('div');
+        modal.style.cssText = "position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; padding:20px; border:2px solid #000; z-index:99999;";
+        modal.innerHTML = `<h5>Mã QR</h5><div id="qr-c"></div><button class="btn btn-sm btn-secondary mt-2" onclick="this.parentElement.remove()">Đóng</button>`;
+        document.body.appendChild(modal);
+        setTimeout(() => { new QRCode(document.getElementById("qr-c"), {text: id, width:200, height:200, correctLevel: 3}); }, 100);
+    }
+
+    function printReport() {
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><style>table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:5px; text-align:center;}</style></head><body>
+            <h3 style="text-align:center;">BÁO CÁO TÀI SẢN</h3>
+            ${document.getElementById("reportTable").outerHTML.replace(/<th.*?Thao tác<\/th>/g, '').replace(/<td.*?>.*?<\/td>$/gm, '')}
+        </body></html>`);
+        setTimeout(() => { win.print(); }, 500);
+    }
+
+    function exportWord() {
+        const sourceHTML = "<html><head><meta charset='utf-8'></head><body>" + document.getElementById("reportTable").outerHTML + "</body></html>";
+        const file = new Blob(['\ufeff', sourceHTML], {type: 'application/msword'});
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = url; a.download = 'BaoCao_TaiSan.doc'; a.click();
+    }
+
+    document.getElementById('dataForm').onsubmit = async (e) => { 
+        e.preventDefault(); 
+        await _sb.from('survey_devices').insert([{ 
+            department: document.getElementById('dept').value, user: document.getElementById('user').value, device: document.getElementById('device').value,
+            os: document.getElementById('os').value, os_lic: document.getElementById('os_lic').value,
+            office: document.getElementById('office').value, off_lic: document.getElementById('off_lic').value,
+            pm: document.getElementById('pm').value, pm_lic: document.getElementById('pm_lic').value 
+        }]); 
+        loadData(); 
+    };
+    loadData();
 </script>
 </body>
 </html>
