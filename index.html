@@ -7,83 +7,123 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Times New Roman', serif; background: #f4f7f6; font-size: 0.9rem; }
-        .status-bar { padding: 5px 15px; font-size: 0.8rem; border-bottom: 1px solid #ddd; background: #fff; }
-        #reportTable { width: 100%; table-layout: fixed; border: 1px solid #000; }
-        th, td { padding: 8px; border: 1px solid #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .qr-action { cursor: pointer; color: blue; text-decoration: underline; }
+        body { font-family: 'Times New Roman', serif; background: #f8f9fa; }
+        .nav-link { cursor: pointer; }
+        .status-bar { padding: 8px; font-weight: bold; border-radius: 4px; }
+        .section { display: none; }
+        .active { display: block; }
+        th, td { padding: 10px; border: 1px solid #dee2e6; vertical-align: middle; }
     </style>
 </head>
-<body>
+<body class="p-3">
 
-<div id="statusBar" class="status-bar">Đang kết nối Supabase...</div>
+<div id="connectionStatus" class="status-bar alert alert-secondary text-center mb-3">Đang kết nối Supabase...</div>
 
-<div class="container-fluid p-4">
-    <div class="d-flex justify-content-between mb-3">
-        <h3>QUẢN LÝ TÀI SẢN DOANH NGHIỆP</h3>
-        <button class="btn btn-success" onclick="exportExcel()">📄 Xuất báo cáo (Chuẩn hành chính)</button>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" onclick="showSection('survey')">Nhập liệu Khảo sát</a></li>
+    <li class="nav-item"><a class="nav-link" onclick="showSection('admin')">Quản trị & Báo cáo</a></li>
+</ul>
+
+<div id="survey" class="section active container card p-4 shadow">
+    <form id="surveyForm" class="row g-3">
+        <div class="col-md-3"><label>Bộ phận</label><input type="text" id="dpt" class="form-control" required></div>
+        <div class="col-md-3"><label>Người dùng</label><input type="text" id="usr" class="form-control" required></div>
+        <div class="col-md-3"><label>Thiết bị</label><input type="text" id="dev" class="form-control" placeholder="Ví dụ: Laptop Dell"></div>
+        <div class="col-md-3"><label>Số lượng</label><input type="number" id="qty" class="form-control" value="1"></div>
+        
+        <div class="col-md-3"><label>CPU</label><input type="text" id="cpu" class="form-control"></div>
+        <div class="col-md-3"><label>RAM</label><input type="text" id="ram" class="form-control"></div>
+        <div class="col-md-3"><label>HDD/SSD</label><input type="text" id="hdd" class="form-control"></div>
+        <div class="col-md-3"><label>VGA</label><input type="text" id="vga" class="form-control"></div>
+
+        <div class="col-md-4"><label>Hệ điều hành</label>
+            <select id="os" class="form-select">
+                <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option></optgroup>
+                <optgroup label="macOS/Linux"><option>macOS Sequoia</option><option>Ubuntu</option><option>Khác</option></optgroup>
+            </select>
+            <select id="osL" class="form-select mt-1"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select>
+        </div>
+        <div class="col-md-4"><label>Office</label>
+            <select id="off" class="form-select">
+                <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option>
+            </select>
+            <select id="offL" class="form-select mt-1"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select>
+        </div>
+        <div class="col-md-4"><label>PM khác (ASIA/MISA/Quasoft)</label>
+            <input type="text" id="pm" class="form-control" list="pmList" placeholder="Chọn hoặc nhập tên...">
+            <datalist id="pmList"><option value="ASIA Enterprise 2026"><option value="MISA SME 2025"><option value="QUASOFT V9"></datalist>
+            <select id="pmL" class="form-select mt-1"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select>
+        </div>
+        <button type="submit" class="btn btn-primary">GỬI PHIẾU KHẢO SÁT</button>
+    </form>
+</div>
+
+<div id="admin" class="section container-fluid">
+    <div class="d-flex mb-2 gap-2">
+        <input type="text" id="filter" class="form-control" placeholder="🔍 Tìm kiếm nhanh..." onkeyup="filterTable()">
+        <button class="btn btn-success" onclick="exportExcel()">📄 Xuất Excel</button>
     </div>
-
-    <div class="row mb-3 g-2">
-        <div class="col-md-4"><input type="text" id="filter" class="form-control" placeholder="🔍 Tìm kiếm theo tên, bộ phận, thiết bị..."></div>
-    </div>
-
     <div class="table-responsive">
-        <table id="reportTable">
-            <thead class="table-light">
-                <tr><th>Người dùng / Bộ phận</th><th>Thiết bị</th><th>HĐH</th><th>Office</th><th>Phần mềm khác</th><th>QR</th><th>Thao tác</th></tr>
-            </thead>
+        <table class="table table-bordered" id="reportTable">
+            <thead class="table-dark"><tr><th>Người dùng/BP</th><th>Thiết bị/Cấu hình</th><th>HĐH/Office</th><th>Thao tác</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
-<div class="modal fade" id="qrModal" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-body text-center">
+<div class="modal fade" id="actionModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-body text-center">
     <div id="qrBox" class="d-flex justify-content-center mb-3"></div>
-    <div class="d-grid gap-2"><button class="btn btn-primary" onclick="window.print()">In mã QR</button><button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+    <input type="password" id="adminPass" class="form-control mb-2" placeholder="Mật khẩu Admin">
+    <button class="btn btn-warning" onclick="handleData('edit')">Sửa</button>
+    <button class="btn btn-danger" onclick="handleData('delete')">Xóa</button>
 </div></div></div></div>
 
 <script>
-    // CẤU HÌNH API CỦA BẠN
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    const PASS = "123456"; 
+    let selectedId = null;
 
     async function init() {
-        const statusBar = document.getElementById('statusBar');
         const { data, error } = await _sb.from('asset_management').select('*');
-        
-        if (error) {
-            statusBar.innerHTML = "🔴 Lỗi kết nối: " + error.message;
-            statusBar.style.background = "#ffcccc";
-        } else {
-            statusBar.innerHTML = "🟢 Trạng thái: Đã kết nối thành công | " + data.length + " bản ghi";
-            statusBar.style.background = "#ccffcc";
-            renderTable(data);
+        if (!error) {
+            document.getElementById('connectionStatus').innerText = "🟢 KẾT NỐI ỔN ĐỊNH";
+            document.getElementById('connectionStatus').className = "alert alert-success";
+            document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
+                <td>${r.user_name}<br><b>${r.department}</b></td>
+                <td>${r.device_name}<br><small>${r.cpu}/${r.ram}/${r.hdd}</small></td>
+                <td>${r.os}/${r.office}</td>
+                <td><button class="btn btn-sm btn-info" onclick="openModal('${r.id}', '${btoa(JSON.stringify(r))}')">Quản lý</button></td>
+            </tr>`).join('');
         }
     }
 
-    function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-            <td><b>${r.user_name}</b><br>${r.department}</td>
-            <td>${r.device_name}</td>
-            <td>${r.os} (${r.os_lic})</td>
-            <td>${r.office} (${r.off_lic})</td>
-            <td>${r.specialized_pm || 'N/A'}</td>
-            <td class="qr-action" onclick="showQR('${r.id}')">Xem/In QR</td>
-            <td><button class="btn btn-sm btn-info" onclick="editData(${r.id})">Sửa</button> <button class="btn btn-sm btn-danger" onclick="delData(${r.id})">Xóa</button></td>
-        </tr>`).join('');
+    document.getElementById('surveyForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await _sb.from('asset_management').insert([{ department: dpt.value, user_name: usr.value, device_name: dev.value, cpu: cpu.value, ram: ram.value, hdd: hdd.value, os: os.value, os_lic: osL.value, office: off.value, off_lic: offL.value, specialized_pm: pm.value, pm_lic: pmL.value }]);
+        alert("Đã gửi thành công!"); location.reload();
+    };
+
+    function openModal(id, dataBase64) {
+        selectedId = id;
+        document.getElementById('qrBox').innerHTML = "";
+        new QRCode(document.getElementById('qrBox'), {text: dataBase64, width: 140, height: 140});
+        new bootstrap.Modal(document.getElementById('actionModal')).show();
     }
 
-    function showQR(id) {
-        document.getElementById('qrBox').innerHTML = "";
-        new QRCode(document.getElementById('qrBox'), {text: "https://your-app-url.com/asset/" + id, width: 160, height: 160});
-        new bootstrap.Modal(document.getElementById('qrModal')).show();
+    async function handleData(type) {
+        if(document.getElementById('adminPass').value !== PASS) { alert("Sai mật khẩu!"); return; }
+        if(type === 'delete') { await _sb.from('asset_management').delete().eq('id', selectedId); location.reload(); }
     }
 
     function exportExcel() {
-        let header = "<div style='text-align:center'><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br><br><h3>BÁO CÁO THỐNG KÊ TÀI SẢN 2026</h3></div>";
-        let table = document.getElementById('reportTable').outerHTML;
-        let blob = new Blob(['\ufeff', header + table], {type: 'application/vnd.ms-excel'});
+        let header = `<div style="text-align:center;"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><hr><h3>BÁO CÁO TÀI SẢN CNTT 2026</h3></div>`;
+        let blob = new Blob(['\ufeff', header + document.getElementById('reportTable').outerHTML], {type: 'application/vnd.ms-excel'});
         let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Bao_Cao_Tai_San.xls'; a.click();
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
     }
 
     init();
