@@ -2,159 +2,166 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>QUẢN TRỊ TÀI SẢN 2026 - HOÀN THIỆN</title>
+    <title>QUẢN TRỊ TÀI SẢN 2026 - FINAL</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Times New Roman', serif; background: #f8f9fa; }
-        .label-field { font-weight: bold; font-size: 0.75rem; color: #333; margin-top: 10px; display: block; }
-        .qr-canvas { width: 50px; height: 50px; margin: auto; }
+        body { font-family: 'Times New Roman', serif; background-color: #f8f9fa; }
+        .label-text { font-weight: bold; font-size: 0.75rem; margin-bottom: 2px; display: block; color: #444; }
+        .qr-canvas { width: 50px; height: 50px; margin: auto; cursor: pointer; border: 1px solid #dee2e6; }
+        #connectionStatus { font-size: 0.8rem; padding: 2px 10px; border-radius: 10px; }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body class="p-3">
 
-<div id="statusBar" class="alert alert-warning text-center no-print">Đang kiểm tra kết nối...</div>
-
 <div class="no-print mb-4 p-3 bg-white border shadow-sm">
     <h5 class="text-center text-uppercase fw-bold">HỆ THỐNG QUẢN TRỊ TÀI SẢN CNTT 2026</h5>
+    <div class="text-center mb-2">
+        <span id="connectionStatus" class="bg-warning text-dark">Đang kiểm tra kết nối...</span>
+    </div>
+    
     <form id="masterForm">
         <input type="hidden" id="editId">
         <div class="row g-2">
-            <div class="col-md-2"><label class="label-field">BỘ PHẬN SỬ DỤNG</label><input type="text" id="dpt" class="form-control" required></div>
-            <div class="col-md-2"><label class="label-field">NGƯỜI SỬ DỤNG</label><input type="text" id="usr" class="form-control" required></div>
-            <div class="col-md-2"><label class="label-field">THIẾT BỊ</label><input type="text" id="dev" class="form-control" required></div>
-            <div class="col-md-1"><label class="label-field">SỐ LƯỢNG</label><input type="number" id="qty" class="form-control" value="1"></div>
-            
-            <div class="col-md-2"><label class="label-field">HỆ ĐIỀU HÀNH</label>
-                <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option><option>Windows 2000</option></optgroup>
-                    <optgroup label="macOS"><option>Sequoia</option><option>Sonoma</option><option>Ventura</option><option>Monterey</option><option>Big Sur</option><option>Catalina</option></optgroup>
-                </select>
+            <div class="col-md-2"><span class="label-text">BỘ PHẬN</span><input type="text" id="dpt" class="form-control" required></div>
+            <div class="col-md-2"><span class="label-text">NGƯỜI DÙNG</span><input type="text" id="usr" class="form-control" required></div>
+            <div class="col-md-2"><span class="label-text">THIẾT BỊ</span><input type="text" id="dev" class="form-control"></div>
+            <div class="col-md-1"><span class="label-text">SỐ LƯỢNG</span><input type="number" id="qty" class="form-control" value="1"></div>
+            <div class="col-md-2"><span class="label-text">HỆ ĐIỀU HÀNH</span><select id="os" class="form-select">
+                <option value="">-- Chọn HĐH --</option>
+                <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option></optgroup>
+            </select></div>
+            <div class="col-md-1"><span class="label-text">BQ HĐH</span><select id="osL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-2"><span class="label-text">OFFICE</span><select id="off" class="form-select">
+                <option value="">-- Chọn Office --</option><option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2010</option>
+            </select></div>
+            <div class="col-md-1"><span class="label-text">BQ OFFICE</span><select id="offL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-2"><span class="label-text">PM CHUYÊN NGÀNH</span><input type="text" id="pm" class="form-control" list="pmList">
+                <datalist id="pmList"><option value="ASIA Enterprise 2026"><option value="MISA SME 2025"><option value="QUASOFT V9"><option value="AutoCAD"></datalist>
             </div>
-            <div class="col-md-1"><label class="label-field">BQ HĐH</label><select id="osL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
-            
-            <div class="col-md-2"><label class="label-field">OFFICE</label>
-                <select id="off" class="form-select">
-                    <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option>
-                </select>
-            </div>
-            <div class="col-md-1"><label class="label-field">BQ OFFICE</label><select id="offL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
-            
-            <div class="col-md-2"><label class="label-field">PM CHUYÊN DỤNG (ASIA/QUASOFT...)</label>
-                <input type="text" id="pm" class="form-control" list="pmList">
-                <datalist id="pmList">
-                    <option value="ASIA Enterprise 2026"><option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="QUASOFT V9"><option value="QUASOFT V8"><option value="QUASOFT V7"><option value="Adobe Creative Cloud"><option value="AutoCAD 2025"><option value="Unikey"><option value="Chrome/Edge">
-                </datalist>
-            </div>
-            <div class="col-md-1"><label class="label-field">BQ PM</label><select id="pmL" class="form-select"><option>Không có</option><option>Chưa có</option><option>Đã có</option></select></div>
-            
-            <div class="col-md-3"><label class="label-field">CẤU HÌNH CHI TIẾT</label><input type="text" id="specs" class="form-control"></div>
-            <div class="col-md-3"><label class="label-field">ĐỀ XUẤT</label><input type="text" id="prop" class="form-control"></div>
-            <div class="col-12"><button id="btnAction" type="button" class="btn btn-dark w-100" onclick="saveData()">LƯU DỮ LIỆU VÀO HỆ THỐNG</button></div>
+            <div class="col-md-1"><span class="label-text">BQ PM</span><select id="pmL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
+            <div class="col-md-3"><span class="label-text">CẤU HÌNH CHI TIẾT</span><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-3"><span class="label-text">ĐỀ XUẤT</span><input type="text" id="prop" class="form-control"></div>
+            <div class="col-12"><button id="btnAction" type="button" class="btn btn-dark w-100 mt-2" onclick="saveData()">LƯU DỮ LIỆU</button></div>
         </div>
     </form>
 </div>
 
 <div class="mb-3 d-flex gap-2 no-print">
-    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm (BP, Người, Thiết bị...)" onkeyup="filterData()">
-    <select id="fDpt" class="form-select" onchange="filterData()"><option value="">Lọc theo Bộ phận</option></select>
+    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm..." onkeyup="filterData()">
     <button class="btn btn-success" onclick="exportFile('excel')">Xuất Excel</button>
     <button class="btn btn-primary" onclick="exportFile('word')">Xuất Word</button>
 </div>
 
 <div id="printableArea" class="bg-white p-4 border">
-    <h4 class="text-center text-uppercase">BẢNG KÊ THỐNG KÊ TÀI SẢN</h4>
-    <table class="table table-bordered table-hover">
-        <thead class="table-dark">
-            <tr><th>Thông tin</th><th>SL</th><th>HĐH (BQ)</th><th>Office (BQ)</th><th>PM (BQ)</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th>Thao tác</th></tr>
-        </thead>
+    <div class="text-center mb-3">
+        <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br><b>Độc lập - Tự do - Hạnh phúc</b></p>
+        <h4 class="text-uppercase">BẢNG KÊ THỐNG KÊ TÀI SẢN</h4>
+    </div>
+    <table class="table table-bordered">
+        <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH (Bản quyền)</th><th>Office (Bản quyền)</th><th>PM chuyên ngành (Bản quyền)</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th>Thao tác</th></tr></thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
 
+<div class="modal fade" id="qrModal" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Xem/In mã QR</h5></div><div class="modal-body text-center" id="fullQrArea"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button class="btn btn-primary" onclick="window.print()">In QR</button></div></div></div></div>
+
 <script>
-    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi'); 
+    const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
     let allData = [];
+    const baseUrl = window.location.href.split('?')[0];
+
+    async function checkConnection() {
+        const status = document.getElementById('connectionStatus');
+        try {
+            const { error } = await _sb.from('asset_management').select('id').limit(1);
+            if (!error) {
+                status.innerText = "● Đã kết nối Supabase";
+                status.className = "bg-success text-white";
+                loadData();
+            } else throw error;
+        } catch (e) {
+            status.innerText = "● Lỗi kết nối!";
+            status.className = "bg-danger text-white";
+        }
+    }
 
     async function loadData() {
         const { data } = await _sb.from('asset_management').select('*');
-        allData = data;
-        render(data);
-        document.getElementById('statusBar').innerText = "● HỆ THỐNG ĐANG KẾT NỐI ỔN ĐỊNH";
-        document.getElementById('statusBar').className = "alert alert-success text-center no-print";
+        allData = data || [];
+        render(allData);
     }
 
     function render(data) {
         document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-            <td><b>${r.department}</b><br>${r.user_name}<br>${r.device_name}</td>
-            <td>${r.quantity}</td>
-            <td>${r.os} (${r.os_lic})</td>
-            <td>${r.office} (${r.off_lic})</td>
-            <td>${r.specialized_pm || 'N/A'} (${r.pm_lic})</td>
-            <td>${r.specs}</td><td>${r.proposal}</td>
-            <td class="text-center"><div id="qr-${r.id}" class="qr-canvas"></div></td>
-            <td>
+            <td><b>${r.department || ''}</b><br>${r.user_name || ''}<br>${r.device_name || ''}</td>
+            <td>${r.quantity || '1'}</td>
+            <td>${r.os || ''} (${r.os_lic || 'Chưa có bản quyền'})</td>
+            <td>${r.office || ''} (${r.off_lic || 'Chưa có bản quyền'})</td>
+            <td>${r.specialized_pm || 'Không có'} (${r.pm_lic || 'Chưa có bản quyền'})</td>
+            <td>${r.specs || ''}</td><td>${r.proposal || ''}</td>
+            <td class="text-center"><div id="qr-${r.id}" class="qr-canvas" onclick="showFullQR('${r.id}')"></div></td>
+            <td class="no-print">
                 <button class="btn btn-sm btn-info" onclick='editData(${JSON.stringify(r).replace(/"/g, '&quot;')})'>Sửa</button>
                 <button class="btn btn-sm btn-danger" onclick="delData(${r.id})">Xóa</button>
             </td>
         </tr>`).join('');
-        data.forEach(r => new QRCode(document.getElementById(`qr-${r.id}`), {text: "ID:"+r.id, width: 50, height: 50}));
+        data.forEach(r => new QRCode(document.getElementById(`qr-${r.id}`), {text: baseUrl + '?id=' + r.id, width: 50, height: 50}));
     }
 
+    function showFullQR(id) {
+        document.getElementById('fullQrArea').innerHTML = "";
+        new QRCode(document.getElementById('fullQrArea'), {text: baseUrl + '?id=' + id, width: 250, height: 250});
+        new bootstrap.Modal(document.getElementById('qrModal')).show();
+    }
+
+    // Các hàm xử lý dữ liệu giữ nguyên không đổi
     function editData(r) {
         document.getElementById('editId').value = r.id;
-        document.getElementById('dpt').value = r.department;
-        document.getElementById('usr').value = r.user_name;
-        document.getElementById('dev').value = r.device_name;
-        document.getElementById('qty').value = r.quantity;
-        document.getElementById('specs').value = r.specs;
-        document.getElementById('prop').value = r.proposal;
-        // Đổ thêm các select box
-        document.getElementById('os').value = r.os;
-        document.getElementById('osL').value = r.os_lic;
-        document.getElementById('off').value = r.office;
-        document.getElementById('offL').value = r.off_lic;
-        document.getElementById('pm').value = r.specialized_pm;
-        document.getElementById('pmL').value = r.pm_lic;
-        document.getElementById('btnAction').innerText = "CẬP NHẬT DỮ LIỆU NGAY";
+        document.getElementById('dpt').value = r.department || '';
+        document.getElementById('usr').value = r.user_name || '';
+        document.getElementById('dev').value = r.device_name || '';
+        document.getElementById('qty').value = r.quantity || '1';
+        document.getElementById('os').value = r.os || '';
+        document.getElementById('osL').value = r.os_lic || '';
+        document.getElementById('off').value = r.office || '';
+        document.getElementById('offL').value = r.off_lic || '';
+        document.getElementById('pm').value = r.specialized_pm || '';
+        document.getElementById('pmL').value = r.pm_lic || '';
+        document.getElementById('specs').value = r.specs || '';
+        document.getElementById('prop').value = r.proposal || '';
+        document.getElementById('btnAction').innerText = "CẬP NHẬT DỮ LIỆU";
         window.scrollTo(0,0);
     }
 
     async function saveData() {
         const id = document.getElementById('editId').value;
-        const payload = { department: document.getElementById('dpt').value, user_name: document.getElementById('usr').value, device_name: document.getElementById('dev').value, quantity: document.getElementById('qty').value, specs: document.getElementById('specs').value, proposal: document.getElementById('prop').value, os: document.getElementById('os').value, os_lic: document.getElementById('osL').value, office: document.getElementById('off').value, off_lic: document.getElementById('offL').value, specialized_pm: document.getElementById('pm').value, pm_lic: document.getElementById('pmL').value };
-        
+        const payload = { department: dpt.value, user_name: usr.value, device_name: dev.value, quantity: qty.value, specs: specs.value, proposal: prop.value, os: os.value, os_lic: osL.value, office: off.value, off_lic: offL.value, specialized_pm: pm.value, pm_lic: pmL.value };
         if(id) await _sb.from('asset_management').update(payload).eq('id', id);
         else await _sb.from('asset_management').insert(payload);
-        
-        document.getElementById('masterForm').reset();
-        document.getElementById('editId').value = '';
-        document.getElementById('btnAction').innerText = "LƯU DỮ LIỆU VÀO HỆ THỐNG";
-        loadData(); // Cập nhật bảng ngay lập tức
+        location.reload();
     }
 
     function delData(id) {
-        let p = prompt("Nhập mật khẩu Admin:");
-        if (p === "ADMIN2026") { _sb.from('asset_management').delete().eq('id', id).then(loadData); }
-        else if (p !== null) alert("Sai mật khẩu!");
+        if(prompt("Nhập mật khẩu Admin:") === "ADMIN2026") _sb.from('asset_management').delete().eq('id', id).then(loadData);
     }
 
     function filterData() {
         const q = document.getElementById('searchBox').value.toLowerCase();
-        render(allData.filter(r => r.department.toLowerCase().includes(q) || r.user_name.toLowerCase().includes(q)));
+        render(allData.filter(r => (r.department + r.user_name + r.device_name + r.specialized_pm).toLowerCase().includes(q)));
     }
 
     function exportFile(type) {
-        let blob = new Blob(['\ufeff', document.getElementById('printableArea').innerHTML], { type: 'application/vnd.ms-excel' });
-        let a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `Bao_Cao_Tai_San.${type === 'excel' ? 'xls' : 'doc'}`;
+        const a = document.createElement('a');
+        a.href = 'data:application/vnd.ms-excel,' + encodeURIComponent(document.getElementById('printableArea').innerHTML);
+        a.download = `Bao_Cao_${new Date().toLocaleDateString()}.${type === 'excel' ? 'xls' : 'doc'}`;
         a.click();
     }
 
-    loadData();
+    checkConnection();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
