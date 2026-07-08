@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>QUẢN TRỊ TÀI SẢN 2026 - FULL</title>
+    <title>QUẢN TRỊ TÀI SẢN 2026 - CHUẨN HÀNH CHÍNH</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -18,19 +18,19 @@
 <div id="statusBar" class="alert alert-warning text-center no-print">Đang kết nối Database...</div>
 
 <div class="no-print mb-4 p-3 bg-white border shadow-sm">
-    <h5 class="text-center text-uppercase fw-bold">QUẢN TRỊ TÀI SẢN 2026</h5>
+    <h5 class="text-center text-uppercase fw-bold">HỆ THỐNG QUẢN TRỊ TÀI SẢN CNTT 2026</h5>
     <form id="masterForm">
         <input type="hidden" id="editId">
         <div class="row g-2">
             <div class="col-md-2"><label class="label-field">BỘ PHẬN</label><input type="text" id="dpt" class="form-control" required></div>
             <div class="col-md-2"><label class="label-field">NGƯỜI DÙNG</label><input type="text" id="usr" class="form-control" required></div>
             <div class="col-md-2"><label class="label-field">THIẾT BỊ</label><input type="text" id="dev" class="form-control" required></div>
-            <div class="col-md-1"><label class="label-field">SL</label><input type="number" id="qty" class="form-control" value="1"></div>
+            <div class="col-md-1"><label class="label-field">SỐ LƯỢNG</label><input type="number" id="qty" class="form-control" value="1"></div>
             
             <div class="col-md-2"><label class="label-field">HỆ ĐIỀU HÀNH</label>
                 <select id="os" class="form-select">
-                    <optgroup label="Windows"><option>Win 11</option><option>Win 10</option><option>Win 8.1</option><option>Win 7</option><option>Win XP</option></optgroup>
-                    <optgroup label="macOS"><option>Sequoia</option><option>Sonoma</option><option>Ventura</option><option>Monterey</option></optgroup>
+                    <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows XP</option></optgroup>
+                    <optgroup label="macOS"><option>macOS Sequoia</option><option>macOS Sonoma</option><option>macOS Ventura</option><option>macOS Monterey</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label class="label-field">BQ HĐH</label><select id="osL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
@@ -42,29 +42,30 @@
             </div>
             <div class="col-md-1"><label class="label-field">BQ OFFICE</label><select id="offL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
             
-            <div class="col-md-2"><label class="label-field">PHẦN MỀM KHÁC</label>
+            <div class="col-md-2"><label class="label-field">PHẦN MỀM CHUYÊN DỤNG</label>
                 <input type="text" id="pm" class="form-control" list="pmList">
                 <datalist id="pmList">
-                    <option value="ASIA Enterprise 2026"><option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="QUASOFT V9"><option value="QUASOFT V8"><option value="QUASOFT V7"><option value="Adobe CC"><option value="AutoCAD 2025"><option value="Unikey"><option value="Chrome/Edge">
+                    <option value="ASIA Enterprise 2026"><option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="QUASOFT V9"><option value="QUASOFT V8"><option value="QUASOFT V7"><option value="Adobe Creative Cloud"><option value="AutoCAD 2025"><option value="Unikey"><option value="Google Chrome"><option value="Microsoft Edge">
                 </datalist>
             </div>
             <div class="col-md-1"><label class="label-field">BQ PM</label><select id="pmL" class="form-select"><option>Không có</option><option>Chưa có</option><option>Đã có</option></select></div>
             
             <div class="col-md-3"><label class="label-field">CẤU HÌNH</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-md-3"><label class="label-field">ĐỀ XUẤT</label><input type="text" id="prop" class="form-control"></div>
-            <div class="col-12"><button id="btnAction" type="button" class="btn btn-dark w-100" onclick="saveData()">LƯU DỮ LIỆU</button></div>
+            <div class="col-12"><button id="btnAction" type="button" class="btn btn-dark w-100" onclick="saveData()">LƯU DỮ LIỆU VÀO HỆ THỐNG</button></div>
         </div>
     </form>
 </div>
 
 <div class="mb-3 d-flex gap-2 no-print">
-    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm theo bộ phận, tên, thiết bị..." onkeyup="filterData()">
-    <select id="fDpt" class="form-select" onchange="filterData()"><option value="">Tất cả bộ phận</option></select>
-    <button class="btn btn-success" onclick="exportFile('excel')">Excel</button>
-    <button class="btn btn-primary" onclick="exportFile('word')">Word</button>
+    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm..." onkeyup="filterData()">
+    <select id="fDpt" class="form-select" onchange="filterData()"><option value="">Lọc theo bộ phận</option></select>
+    <button class="btn btn-success" onclick="exportFile('excel')">Xuất Excel</button>
+    <button class="btn btn-primary" onclick="exportFile('word')">Xuất Word</button>
 </div>
 
 <div id="printableArea" class="bg-white p-4 border">
+    <h4 class="text-center text-uppercase">BẢNG KÊ THỐNG KÊ TÀI SẢN</h4>
     <table class="table table-bordered table-hover">
         <thead class="table-dark">
             <tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th>Thao tác</th></tr>
@@ -80,14 +81,10 @@
     async function loadData() {
         const { data } = await _sb.from('asset_management').select('*');
         allData = data || [];
-        
-        // Cập nhật danh sách bộ phận cho bộ lọc
         const depts = [...new Set(allData.map(r => r.department))];
-        const fDpt = document.getElementById('fDpt');
-        fDpt.innerHTML = '<option value="">Tất cả bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
-        
+        document.getElementById('fDpt').innerHTML = '<option value="">Lọc theo bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
         render(allData);
-        document.getElementById('statusBar').innerText = "● KẾT NỐI DATABASE THÀNH CÔNG";
+        document.getElementById('statusBar').innerText = "● HỆ THỐNG ĐANG KẾT NỐI";
         document.getElementById('statusBar').className = "alert alert-success text-center no-print";
     }
 
@@ -111,10 +108,7 @@
     function filterData() {
         const q = document.getElementById('searchBox').value.toLowerCase();
         const d = document.getElementById('fDpt').value;
-        const filtered = allData.filter(r => 
-            (r.department.toLowerCase().includes(q) || r.user_name.toLowerCase().includes(q) || r.device_name.toLowerCase().includes(q)) && 
-            (d === "" || r.department === d)
-        );
+        const filtered = allData.filter(r => (r.department.toLowerCase().includes(q) || r.user_name.toLowerCase().includes(q)) && (d === "" || r.department === d));
         render(filtered);
     }
 
@@ -139,13 +133,10 @@
     async function saveData() {
         const id = document.getElementById('editId').value;
         const payload = { department: document.getElementById('dpt').value, user_name: document.getElementById('usr').value, device_name: document.getElementById('dev').value, quantity: document.getElementById('qty').value, specs: document.getElementById('specs').value, proposal: document.getElementById('prop').value, os: document.getElementById('os').value, os_lic: document.getElementById('osL').value, office: document.getElementById('off').value, off_lic: document.getElementById('offL').value, specialized_pm: document.getElementById('pm').value, pm_lic: document.getElementById('pmL').value };
-        
         if(id) await _sb.from('asset_management').update(payload).eq('id', id);
         else await _sb.from('asset_management').insert(payload);
-        
         document.getElementById('masterForm').reset();
         document.getElementById('editId').value = '';
-        document.getElementById('btnAction').innerText = "LƯU DỮ LIỆU";
         loadData();
     }
 
