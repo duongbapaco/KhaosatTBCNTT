@@ -8,25 +8,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Times New Roman', serif; background: #f8f9fa; }
-        .label-field { font-weight: bold; font-size: 0.75rem; color: #333; margin-top: 10px; display: block; }
-        .qr-thumb { width: 50px; cursor: pointer; border: 1px solid #ddd; padding: 2px; }
+        .qr-thumb { width: 50px; cursor: pointer; border: 1px solid #ccc; }
         @media print { .no-print, .btn, .modal-footer { display: none !important; } }
     </style>
 </head>
 <body class="p-3">
 
+<!-- MODAL XEM CHI TIẾT & IN -->
 <div class="modal fade" id="qrModal" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content p-4">
-        <h5 class="text-uppercase text-center">PHIẾU THÔNG TIN TÀI SẢN</h5>
-        <div id="modalBody" class="border p-3 my-2"></div>
+    <div class="modal-dialog"><div class="modal-content p-4 text-center">
+        <h5 class="text-uppercase">PHIẾU THÔNG TIN TÀI SẢN</h5>
+        <div id="modalBody" class="text-start border p-3 my-2"></div>
         <div id="qrCodeBig" class="d-flex justify-content-center my-3"></div>
-        <div class="text-center">
+        <div>
             <button class="btn btn-primary" onclick="window.print()">In Phiếu</button>
             <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
         </div>
     </div></div>
 </div>
 
+<!-- FORM NHẬP LIỆU -->
 <div class="no-print mb-4 p-3 bg-white border shadow-sm">
     <h5 class="text-center text-uppercase fw-bold">HỆ THỐNG QUẢN TRỊ TÀI SẢN 2026</h5>
     <form id="masterForm">
@@ -40,7 +41,7 @@
             <div class="col-md-2"><label class="label-field">HỆ ĐIỀU HÀNH</label>
                 <select id="os" class="form-select">
                     <optgroup label="Windows"><option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option></optgroup>
-                    <optgroup label="macOS"><option>macOS Sequoia</option><option>macOS Sonoma</option><option>macOS Ventura</option><option>macOS Monterey</option></optgroup>
+                    <optgroup label="macOS"><option>macOS Sequoia</option><option>macOS Sonoma</option><option>macOS Ventura</option></optgroup>
                 </select>
             </div>
             <div class="col-md-1"><label class="label-field">BQ HĐH</label><select id="osL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
@@ -48,34 +49,36 @@
             <div class="col-md-2"><label class="label-field">OFFICE</label>
                 <select id="off" class="form-select">
                     <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option><option>Office 2016</option>
-                    <option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option><option>Office XP</option>
+                    <option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option><option>Office XP</option><option>Office 2000</option><option>Office 97</option>
                 </select>
             </div>
             <div class="col-md-1"><label class="label-field">BQ OFFICE</label><select id="offL" class="form-select"><option>Chưa có</option><option>Đã có</option></select></div>
             
-            <div class="col-md-2"><label class="label-field">PM CHUYÊN DỤNG</label>
+            <div class="col-md-2"><label class="label-field">PM KHÁC</label>
                 <input type="text" id="pm" class="form-control" list="pmList">
                 <datalist id="pmList">
-                    <option value="ASIA Enterprise 2026"><option value="ASIA Enterprise 2025"><option value="ASIA Enterprise 2020"><option value="QUASOFT V9"><option value="QUASOFT V8"><option value="QUASOFT V7"><option value="Adobe Creative Cloud"><option value="AutoCAD 2025"><option value="Unikey"><option value="Chrome/Edge">
+                    <option value="ASIA Enterprise 2026"><option value="ASIA Enterprise 2025"><option value="QUASOFT V9"><option value="QUASOFT V8"><option value="Adobe Creative Cloud"><option value="AutoCAD 2025"><option value="Unikey"><option value="Chrome/Edge">
                 </datalist>
             </div>
             <div class="col-md-1"><label class="label-field">BQ PM</label><select id="pmL" class="form-select"><option>Không có</option><option>Chưa có</option><option>Đã có</option></select></div>
             
-            <div class="col-md-3"><label class="label-field">CẤU HÌNH CHI TIẾT</label><input type="text" id="specs" class="form-control"></div>
+            <div class="col-md-3"><label class="label-field">CẤU HÌNH</label><input type="text" id="specs" class="form-control"></div>
             <div class="col-md-3"><label class="label-field">ĐỀ XUẤT</label><input type="text" id="prop" class="form-control"></div>
             <div class="col-12"><button id="btnAction" type="button" class="btn btn-dark w-100" onclick="saveData()">LƯU DỮ LIỆU</button></div>
         </div>
     </form>
 </div>
 
+<!-- TÌM KIẾM & BỘ LỌC -->
 <div class="mb-3 d-flex gap-2 no-print">
-    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm tài sản..." onkeyup="filterData()">
+    <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm..." onkeyup="filterData()">
+    <select id="fDpt" class="form-select" onchange="filterData()"><option value="">Lọc theo bộ phận</option></select>
     <button class="btn btn-success" onclick="exportFile()">Xuất Excel</button>
 </div>
 
 <div id="printableArea" class="bg-white p-4 border">
     <table class="table table-bordered table-hover">
-        <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM</th><th>Cấu hình</th><th>Đề xuất</th><th>QR</th><th>Thao tác</th></tr></thead>
+        <thead class="table-dark"><tr><th>Thông tin</th><th>SL</th><th>HĐH</th><th>Office</th><th>PM</th><th>QR</th><th>Thao tác</th></tr></thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
@@ -83,22 +86,36 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
+    const SITE_URL = "https://duongbapaco.github.io/KhaosatTBCNTT/"; // ĐIỀN ĐỊA CHỈ WEB CỦA BẠN VÀO ĐÂY
     let allData = [];
 
     async function loadData() {
         const { data } = await _sb.from('asset_management').select('*');
         allData = data || [];
+        updateFilters();
         render(allData);
+        
+        // TỰ ĐỘNG BUNG MODAL NẾU QUÉT QR CÓ ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const assetId = urlParams.get('id');
+        if(assetId) {
+            const item = allData.find(x => x.id == assetId);
+            if(item) showModal(item);
+        }
+    }
+
+    function updateFilters() {
+        const depts = [...new Set(allData.map(r => r.department))];
+        document.getElementById('fDpt').innerHTML = '<option value="">Lọc bộ phận</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
     }
 
     function render(data) {
         document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
             <td><b>${r.department}</b><br>${r.user_name}<br>${r.device_name}</td>
             <td>${r.quantity}</td>
-            <td>${r.os} (${r.os_lic})</td><td>${r.office} (${r.off_lic})</td>
-            <td>${r.specialized_pm || 'N/A'} (${r.pm_lic})</td>
-            <td>${r.specs}</td><td>${r.proposal}</td>
-            <td><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ID:${r.id}" class="qr-thumb" onclick='showModal(${JSON.stringify(r).replace(/"/g, '&quot;')})'></td>
+            <td>${r.os}(${r.os_lic})</td><td>${r.office}(${r.off_lic})</td>
+            <td>${r.specialized_pm || 'N/A'}</td>
+            <td><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${SITE_URL}?id=${r.id}" class="qr-thumb" onclick='showModal(${JSON.stringify(r).replace(/"/g, '&quot;')})'></td>
             <td>
                 <button class="btn btn-sm btn-info" onclick='editData(${JSON.stringify(r).replace(/"/g, '&quot;')})'>Sửa</button>
                 <button class="btn btn-sm btn-danger" onclick="delData(${r.id})">Xóa</button>
@@ -107,9 +124,9 @@
     }
 
     function showModal(r) {
-        document.getElementById('modalBody').innerHTML = `<b>Bộ phận:</b> ${r.department}<br><b>Người dùng:</b> ${r.user_name}<br><b>Thiết bị:</b> ${r.device_name}<br><b>Cấu hình:</b> ${r.specs}`;
+        document.getElementById('modalBody').innerHTML = `<b>Bộ phận:</b> ${r.department}<br><b>User:</b> ${r.user_name}<br><b>Thiết bị:</b> ${r.device_name}<br><b>Cấu hình:</b> ${r.specs}`;
         document.getElementById('qrCodeBig').innerHTML = "";
-        new QRCode(document.getElementById('qrCodeBig'), {text: "ID:"+r.id, width: 200, height: 200});
+        new QRCode(document.getElementById('qrCodeBig'), {text: `${SITE_URL}?id=${r.id}`, width: 200, height: 200});
         new bootstrap.Modal(document.getElementById('qrModal')).show();
     }
 
@@ -118,43 +135,32 @@
         document.getElementById('dpt').value = r.department;
         document.getElementById('usr').value = r.user_name;
         document.getElementById('dev').value = r.device_name;
-        document.getElementById('qty').value = r.quantity;
-        document.getElementById('os').value = r.os;
-        document.getElementById('osL').value = r.os_lic;
-        document.getElementById('off').value = r.office;
-        document.getElementById('offL').value = r.off_lic;
-        document.getElementById('pm').value = r.specialized_pm;
-        document.getElementById('pmL').value = r.pm_lic;
-        document.getElementById('specs').value = r.specs;
-        document.getElementById('prop').value = r.proposal;
         document.getElementById('btnAction').innerText = "CẬP NHẬT";
         window.scrollTo(0,0);
     }
 
     async function saveData() {
         const id = document.getElementById('editId').value;
-        const payload = { department: document.getElementById('dpt').value, user_name: document.getElementById('usr').value, device_name: document.getElementById('dev').value, quantity: document.getElementById('qty').value, specs: document.getElementById('specs').value, proposal: document.getElementById('prop').value, os: document.getElementById('os').value, os_lic: document.getElementById('osL').value, office: document.getElementById('off').value, off_lic: document.getElementById('offL').value, specialized_pm: document.getElementById('pm').value, pm_lic: document.getElementById('pmL').value };
+        const payload = { department: document.getElementById('dpt').value, user_name: document.getElementById('usr').value, device_name: document.getElementById('dev').value, os: document.getElementById('os').value, office: document.getElementById('off').value };
         if(id) await _sb.from('asset_management').update(payload).eq('id', id);
         else await _sb.from('asset_management').insert(payload);
-        document.getElementById('masterForm').reset();
-        document.getElementById('editId').value = '';
         loadData();
     }
 
     function delData(id) {
-        let p = prompt("Mật khẩu Admin:");
-        if (p === "ADMIN2026") { _sb.from('asset_management').delete().eq('id', id).then(loadData); }
+        if (prompt("Mật khẩu Admin:") === "ADMIN2026") _sb.from('asset_management').delete().eq('id', id).then(loadData);
     }
 
     function filterData() {
         const q = document.getElementById('searchBox').value.toLowerCase();
-        render(allData.filter(r => r.department.toLowerCase().includes(q) || r.user_name.toLowerCase().includes(q)));
+        const d = document.getElementById('fDpt').value;
+        render(allData.filter(r => (r.department.toLowerCase().includes(q) || r.user_name.toLowerCase().includes(q)) && (d === "" || r.department === d)));
     }
 
     function exportFile() {
         let a = document.createElement('a');
         a.href = 'data:application/vnd.ms-excel,' + encodeURIComponent(document.getElementById('printableArea').innerHTML);
-        a.download = 'Bao_Cao_Tai_San.xls'; a.click();
+        a.download = 'Bao_Cao.xls'; a.click();
     }
 
     loadData();
