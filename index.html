@@ -33,7 +33,10 @@
                 <option value="">-- Chọn HĐH --</option>
                 <optgroup label="Windows">
                     <option>Windows 11</option><option>Windows 10</option><option>Windows 8.1</option><option>Windows 8</option>
-                    <option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option>
+                    <option>Windows 7</option><option>Windows Vista</option><option>Windows XP</option><option>Windows 2000</option><option>Windows 98/95</option>
+                </optgroup>
+                <optgroup label="MacOS / Linux">
+                    <option>macOS Sequoia</option><option>macOS Sonoma</option><option>Ubuntu Linux</option>
                 </optgroup>
             </select></div>
             <div class="col-md-1"><span class="label-text">BQ HĐH</span><select id="osL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
@@ -42,11 +45,17 @@
                 <option value="">-- Chọn Office --</option>
                 <option>Microsoft 365</option><option>Office 2024</option><option>Office 2021</option><option>Office 2019</option>
                 <option>Office 2016</option><option>Office 2013</option><option>Office 2010</option><option>Office 2007</option><option>Office 2003</option>
+                <option>WPS Office</option>
             </select></div>
             <div class="col-md-1"><span class="label-text">BQ OFFICE</span><select id="offL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
             
             <div class="col-md-2"><span class="label-text">PM CHUYÊN NGÀNH</span><input type="text" id="pm" class="form-control" list="pmList">
-                <datalist id="pmList"><option value="ASIA Enterprise 2026"><option value="MISA SME 2025"><option value="QUASOFT V9"></datalist>
+                <datalist id="pmList">
+                    <optgroup label="ASIA Soft"><option value="ASIA Enterprise 2026"><option value="ASIA ERP 2025"><option value="ASIA Gold 2024"></optgroup>
+                    <optgroup label="MISA"><option value="MISA SME 2025"><option value="MISA AMIS"><option value="MISA Mimosa"></optgroup>
+                    <optgroup label="QUASOFT"><option value="QUASOFT V9"><option value="QUASOFT V8"></optgroup>
+                    <optgroup label="Khác"><option value="Fast Accounting"><option value="Bravo ERP"><option value="AutoCAD 2026"><option value="Adobe Creative Cloud"></optgroup>
+                </datalist>
             </div>
             <div class="col-md-1"><span class="label-text">BQ PM</span><select id="pmL" class="form-select"><option>Chưa có bản quyền</option><option>Đã có bản quyền</option></select></div>
             
@@ -59,7 +68,7 @@
 
 <div class="mb-3 d-flex gap-2 no-print">
     <input type="text" id="searchBox" class="form-control" placeholder="🔍 Tìm kiếm..." onkeyup="filterData()">
-    <button class="btn btn-success" onclick="exportExcel()">Xuất Excel (.xlsx) chuẩn báo cáo</button>
+    <button class="btn btn-success" onclick="exportExcel()">Xuất Excel (.xlsx)</button>
 </div>
 
 <div id="printableArea" class="bg-white p-4 border">
@@ -69,7 +78,21 @@
     </table>
 </div>
 
-<div class="modal fade" id="qrModal" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Mã QR Tài sản</h5></div><div class="modal-body text-center" id="fullQrArea"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button class="btn btn-primary" onclick="window.print()">In mã</button></div></div></div></div>
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Xác nhận xóa</h5></div>
+            <div class="modal-body">
+                <input type="password" id="adminPass" class="form-control" placeholder="Nhập mật khẩu Admin">
+                <input type="hidden" id="deleteTargetId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Xác nhận xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const _sb = supabase.createClient('https://ckoersckkzygzuifplwj.supabase.co', 'sb_publishable_cfzmHqhoCkWwD2KZBEHZvw_xr5vVDbi');
@@ -87,41 +110,45 @@
 
     function render(data) {
         document.getElementById('tableBody').innerHTML = data.map(r => `<tr>
-            <td>${r.department || ''}</td><td>${r.user_name || ''}</td><td>${r.device_name || ''}</td>
-            <td>${r.quantity || '1'}</td>
-            <td>${r.os || ''} (${r.os_lic || 'Chưa có'})</td>
-            <td>${r.office || ''} (${r.off_lic || 'Chưa có'})</td>
-            <td>${r.specialized_pm || 'Không có'} (${r.pm_lic || 'Chưa có'})</td>
-            <td>${r.specs || ''}</td><td>${r.proposal || ''}</td>
-            <td class="text-center no-print"><div id="qr-${r.id}" class="qr-canvas" onclick="showFullQR('${r.id}')"></div></td>
+            <td>${r.department||''}</td><td>${r.user_name||''}</td><td>${r.device_name||''}</td>
+            <td>${r.quantity||'1'}</td><td>${r.os||''} (${r.os_lic||'Chưa có'})</td>
+            <td>${r.office||''} (${r.off_lic||'Chưa có'})</td><td>${r.specialized_pm||'Không có'} (${r.pm_lic||'Chưa có'})</td>
+            <td>${r.specs||''}</td><td>${r.proposal||''}</td>
+            <td class="text-center no-print"><div id="qr-${r.id}" class="qr-canvas"></div></td>
             <td class="no-print"><button class="btn btn-sm btn-info" onclick='editData(${JSON.stringify(r).replace(/"/g, '&quot;')})'>Sửa</button> <button class="btn btn-sm btn-danger" onclick="delData(${r.id})">Xóa</button></td>
         </tr>`).join('');
         data.forEach(r => new QRCode(document.getElementById(`qr-${r.id}`), {text: baseUrl + '?id=' + r.id, width: 50, height: 50}));
     }
 
-    function showFullQR(id) {
-        document.getElementById('fullQrArea').innerHTML = "";
-        new QRCode(document.getElementById('fullQrArea'), {text: baseUrl + '?id=' + id, width: 250, height: 250});
-        new bootstrap.Modal(document.getElementById('qrModal')).show();
+    async function loadData() { const { data } = await _sb.from('asset_management').select('*'); allData = data || []; render(allData); }
+    
+    function delData(id) { document.getElementById('deleteTargetId').value = id; new bootstrap.Modal(document.getElementById('deleteModal')).show(); }
+
+    async function confirmDelete() {
+        if(document.getElementById('adminPass').value === "ADMIN2026") {
+            await _sb.from('asset_management').delete().eq('id', document.getElementById('deleteTargetId').value);
+            location.reload();
+        } else alert("Sai mật khẩu!");
     }
 
+    async function saveData() { 
+        const id = document.getElementById('editId').value;
+        const payload = { department: dpt.value, user_name: usr.value, device_name: dev.value, quantity: qty.value, specs: specs.value, proposal: prop.value, os: os.value, os_lic: osL.value, office: off.value, off_lic: offL.value, specialized_pm: pm.value, pm_lic: pmL.value };
+        if(id) await _sb.from('asset_management').update(payload).eq('id', id); else await _sb.from('asset_management').insert(payload);
+        location.reload(); 
+    }
+
+    function editData(r) { document.getElementById('editId').value = r.id; document.getElementById('dpt').value = r.department || ''; document.getElementById('usr').value = r.user_name || ''; document.getElementById('dev').value = r.device_name || ''; document.getElementById('qty').value = r.quantity || '1'; document.getElementById('os').value = r.os || ''; document.getElementById('osL').value = r.os_lic || ''; document.getElementById('off').value = r.office || ''; document.getElementById('offL').value = r.off_lic || ''; document.getElementById('pm').value = r.specialized_pm || ''; document.getElementById('pmL').value = r.pm_lic || ''; document.getElementById('specs').value = r.specs || ''; document.getElementById('prop').value = r.proposal || ''; document.getElementById('btnAction').innerText = "CẬP NHẬT DỮ LIỆU"; window.scrollTo(0,0); }
+    
+    function filterData() { const q = document.getElementById('searchBox').value.toLowerCase(); render(allData.filter(r => (r.department + r.user_name + r.device_name + r.specialized_pm).toLowerCase().includes(q))); }
+    
     function exportExcel() {
-        const header = [["CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"], ["Độc lập - Tự do - Hạnh phúc"], [""], ["BÁO CÁO THỐNG KÊ TÀI SẢN CNTT 2026"], ["Ngày xuất: " + new Date().toLocaleDateString()], [""]];
         const table = document.getElementById("dataTable").cloneNode(true);
         Array.from(table.rows).forEach(row => { if(row.cells.length > 9) { row.deleteCell(10); row.deleteCell(9); } });
-        const ws = XLSX.utils.table_to_sheet(table);
-        XLSX.utils.sheet_add_aoa(ws, header, { origin: "A1" });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "TaiSan");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(table), "TaiSan");
         XLSX.writeFile(wb, "Bao_Cao_Tai_San_2026.xlsx");
     }
 
-    async function loadData() { const { data } = await _sb.from('asset_management').select('*'); allData = data || []; render(allData); }
-    function editData(r) { document.getElementById('editId').value = r.id; document.getElementById('dpt').value = r.department || ''; document.getElementById('usr').value = r.user_name || ''; document.getElementById('dev').value = r.device_name || ''; document.getElementById('qty').value = r.quantity || '1'; document.getElementById('os').value = r.os || ''; document.getElementById('osL').value = r.os_lic || ''; document.getElementById('off').value = r.office || ''; document.getElementById('offL').value = r.off_lic || ''; document.getElementById('pm').value = r.specialized_pm || ''; document.getElementById('pmL').value = r.pm_lic || ''; document.getElementById('specs').value = r.specs || ''; document.getElementById('prop').value = r.proposal || ''; document.getElementById('btnAction').innerText = "CẬP NHẬT DỮ LIỆU"; window.scrollTo(0,0); }
-    async function saveData() { const id = document.getElementById('editId').value; const payload = { department: dpt.value, user_name: usr.value, device_name: dev.value, quantity: qty.value, specs: specs.value, proposal: prop.value, os: os.value, os_lic: osL.value, office: off.value, off_lic: offL.value, specialized_pm: pm.value, pm_lic: pmL.value }; if(id) await _sb.from('asset_management').update(payload).eq('id', id); else await _sb.from('asset_management').insert(payload); location.reload(); }
-    function delData(id) { if(prompt("Nhập mật khẩu Admin:") === "ADMIN2026") _sb.from('asset_management').delete().eq('id', id).then(loadData); }
-    function filterData() { const q = document.getElementById('searchBox').value.toLowerCase(); render(allData.filter(r => (r.department + r.user_name + r.device_name + r.specialized_pm).toLowerCase().includes(q))); }
-    
     checkConnection();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
